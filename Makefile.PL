@@ -1,0 +1,17 @@
+use strict;
+use warnings;
+use ExtUtils::MakeMaker;
+
+WriteMakefile(
+    NAME                => 'Text::RewriteRules',
+    AUTHOR              => 'Alberto Simões <ambs@cpan.org>',
+    VERSION_FROM        => 'lib/Text/RewriteRules.pm',
+    ABSTRACT_FROM       => 'lib/Text/RewriteRules.pm',
+    PL_FILES            => {},
+    PREREQ_PM => {
+        'Filter::Simple' => 0.78,
+        'Test::More' => 0,
+    },
+    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
+    clean               => { FILES => 'Text-RewriteRules-*' },
+);

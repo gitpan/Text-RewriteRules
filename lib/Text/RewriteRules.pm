@@ -12,11 +12,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.05
+Version 0.07
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -28,6 +28,141 @@ our $VERSION = '0.05';
     ENDRULES
 
     email("ambs@cpan.org") # returns ambs AT cpan DOT org
+
+=head1 ABSTRACT
+
+This module uses a simplified syntax for regexp-based rules for
+rewriting text. You define a set of rules, and the system applies them
+until no more rule can be applied.
+
+=head1 DESCRIPTION
+
+A lot of computer science problems can be solved using rewriting
+rules.
+
+Rewriting rules consist of mainly two parts: a regexp (LHS: Left Hand
+Side) that is matched with the text, and the string to use to
+substitute the content matched with the regexp (RHS: Right Hand Side).
+
+Now, why don't use a simple substitute? Because we want to define a
+set of rules and match them again and again, until no more regexp of
+the LHS matches.
+
+A point of discussion is the syntax to define this system. A brief
+discussion shown that some users would prefer a function to receive an
+hash with the rules, some other, prefer some syntax sugar.
+
+The approach used is the last: we use C<Filter::Simple> such that we
+can add a specific non-perl syntax inside the Perl script. This
+improves legibility of big rewriting rules sytems.
+
+This documentation is divided in two parts: first we will see the
+reference of the module. Kind of, what it does, with a brief
+explanation. Follows a tutorial which will be growing through time and
+releases.
+
+=head1 SYNTAX REFERENCE
+
+Note: most of the examples are very stupid, but that is the easiest
+way to explain the basic syntax.
+
+The basic syntax for the rewrite rules is a block, started by the
+keyword C<RULES> and ended by the C<ENDRULES>. Everything between
+them is handled by the module and interpreted as rules or comments.
+
+The C<RULES> keyword can handle a set of flags (we will see that
+later), and requires a name for the rule-set. This name will be used
+to define a function for that rewriting system.
+
+   RULES functioname
+    ...
+   ENDRULES
+
+The function is defined in the main namespace where the C<RULES>
+block appears.
+
+In this block, each line can be a comment (Perl style), an empty line
+or a rule.
+
+=head2 Basic Rule
+
+A basic rule is a simple substitution:
+
+  RULES foobar
+  foo==>bar
+  ENDRULES
+
+The arrow C<==E<gt>> is used as delimiter. At its left is the regexp
+to match, at the right side, the substitution. So, the previous block
+defines a C<foobar> function that substitutes all C<foo> by
+C<bar>.
+
+Although this can seems similar to a global substitution, it is
+not. With a global substitution you can't do an endless loop. With
+this module it is very simple. I know you will get the idea.
+
+You can use the syntax of Perl both on the left and right hand side of
+the rule, including C<$1...>.
+
+=head2 Execution Rule
+
+If the Perl substitution supports execution, why not to support it,
+also? So, you got the idea. Here is an example:
+
+  RULES foo
+  (\d+)b=e=>'b' x $1
+  (\d+)a=eval=>'a' x ($1*2)
+  ENDRULES
+
+So, for any number followed by a C<b>, we replace by that number of
+C<b's>. For each number followed by an C<a>, we replace them by twice
+that number of C<a's>.
+
+Also, you mean evaluation using an C<e> or C<eval> inside the arrow. I
+should remind you can mix all these rules together in the same
+rewriting system.
+
+=head2 Conditional Rule
+
+On some cases we want to perform a susbtitution if the pattern matches
+B<and> a set of conditions about that pattern (or not) are true.
+
+For that, we use a three part rule. We have the common rule plus the
+condition part, separated from the rule by C<!!>. These conditional
+rules can be applied both for basic and exeuction rules.
+
+  RULES translate
+  ([[:alpha:]]+)=e=>$dic{$1}!! exists($dic{$1})
+  ENDRULES
+
+The previous example would translate all words that exist on the
+dictionary.
+
+=head2 Begin Rule
+
+Sometimes it is useful to change something on the string before
+starting to apply the rules. For that, there is a special rule named
+C<begin> (or C<b> for abbreviate) just with a RHS. This RHS is Perl
+code. Any Perl code. If you want to modify the string, use C<$_>.
+
+  RULES foo
+  =b=> $_.=" END"
+  ENDRULES
+
+=head2 Last Rule
+
+As you use C<last> on Perl to skip the remaining code on a loop, you
+can also call a C<last> (or C<l>) rule when a specific pattern
+matches.
+
+Like the C<begin> rule with only a RHS, the C<last> rule has only a
+LHS:
+
+  RULES foo
+  foobar=l=>
+  ENDRULES
+
+This way, the rules iterate until the string matches with C<foobar>.
 
 =cut
 

@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.08    2005, Mar 06 (20:13)
+	- Added RULES/x flag -- needs some more tests
+
 0.07    2005, Feb 22 (18:38)
 	- upload for 0.06 failed.
 0.06    2005, Feb 22 (18:28)

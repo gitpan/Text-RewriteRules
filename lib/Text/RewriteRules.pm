@@ -12,11 +12,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -174,6 +174,8 @@ sub _mrules {
   my ($conf, $name, $rules) = @_;
   ++$count;
 
+  chomp($rules);
+
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
   $code .= "  my \$_M = \"\\x01\";\n";
@@ -261,6 +263,8 @@ sub _rules {
   my ($conf,$name, $rules) = @_;
   ++$count;
 
+  chomp($rules);
+
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
   $code .= "  for (\$p) {\n";
@@ -273,72 +277,78 @@ sub _rules {
   ##---
 
   my $DICASE = exists($conf->{i})?"i":"";
+  my $DX = exists($conf->{x})?"x":"";
 
-  my @rules = split /\n/, $rules;
+  my @rules;
+  if ($DX eq "x") {
+    @rules = split /\n\n/, $rules;
+  } else {
+    @rules = split /\n/, $rules;
+  }
 
   for my $rule (@rules) {
 
     my $ICASE = $DICASE;
 
-    if($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
+    if($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/s) {
       my ($ant,$con,$cond) = ($1,$3,$4);
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      while (m{$ant}g$ICASE) {\n";
+      $code .= "      while (m{$ant}g$ICASE$DX) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{$ant\\G}{$con}$ICASE;\n";
+      $code .= "          s{$ant\\G}{$con}$ICASE$DX;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
       $code .= "      }\n";
 
-    } elsif($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/) {
+    } elsif($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/s) {
       my ($ant,$con,$cond) = ($1,$3,$4);
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      while (m{$ant}g$ICASE) {\n";
+      $code .= "      while (m{$ant}g$ICASE$DX) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{$ant\\G}{$con}e${ICASE};\n";
+      $code .= "          s{$ant\\G}{$con}e${ICASE}${DX};\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*?)(=i?=>)(.*)/) {
+    } elsif ($rule =~ m/(.*?)(=i?=>)(.*)/s) {
       my ($ant,$con) = ($1,$3);
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{$ant}$ICASE) {\n";
-      $code .= "        s{$ant}{$con}$ICASE;\n";
+      $code .= "      if (m{$ant}$ICASE$DX) {\n";
+      $code .= "        s{$ant}{$con}$ICASE$DX;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/) {
+    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/s) {
       my ($ant,$con) = ($1,$3);
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{$ant}$ICASE) {\n";
-      $code .= "        s{$ant}{$con}e$ICASE;\n";
+      $code .= "      if (m{$ant}$ICASE$DX) {\n";
+      $code .= "        s{$ant}{$con}e$ICASE$DX;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
 
-    } elsif($rule =~ m/=b(?:egin)?=>(.*)/) {
+    } elsif($rule =~ m/=b(?:egin)?=>(.*)/s) {
 
       my $ac = $1;
       $code =~ s/(#__$count#\n)/$ac;\n$1/;
 
-    } elsif($rule =~ m/(.*?)(=(i=)?l(ast)?=>)/) {
+    } elsif($rule =~ m/(.*?)(=(i=)?l(ast)?=>)/s) {
       my ($ant) = ($1);
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{$ant}$ICASE) {\n";
+      $code .= "      if (m{$ant}$ICASE$DX) {\n";
       $code .= "        last\n";
       $code .= "      }\n";
     } else {

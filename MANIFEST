@@ -10,3 +10,4 @@ t/pod.t
 t/01.simple.t
 t/02.mark.t
 samples/num2words
+t/03.mline.t

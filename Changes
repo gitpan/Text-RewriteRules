@@ -1,5 +1,9 @@
 Revision history for Text-RewriteRules
 
+0.03    2005, Feb 15 (16:34)
+	- Corrected bug: mark walking code missing
+	- Added support for ignore case
+
 0.02    2004, Dec 30 (14:00)
 	- Added num2words example
 

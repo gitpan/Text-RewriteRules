@@ -11,11 +11,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -48,43 +48,67 @@ sub _mrules {
   $code .= "    MAIN: while (\$modified) {\n";
   $code .= "      \$modified = 0;\n";
 
+  my $ICASE = "";
+
   ##---
   my @rules = split /\n/, $rules;
   for my $rule (@rules) {
-    if ($rule =~ m/(.*)==>(.*)!!(.*)/) {
-      $code .= "      while (m{\${_M}$1}g) {\n";
-      $code .= "        if ($3) {\n";
-      $code .= "          s{\${_M}$1\\G}{$2\${_M}}\n";
+    if ($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
+      my ($ant,$con,$cond) = ($1,$3,$4);
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      while (m{\${_M}$ant}g$ICASE) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{\${_M}$ant\\G}{$con\${_M}}$ICASE\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*)=e(?:val)?=>(.*)!!(.*)/) {
-      $code .= "      while (m{\${_M}$1}g) {\n";
-      $code .= "        if ($3) {\n";
-      $code .= "          s{\${_M}$1\\G}{$2\${_M}}e\n";
+    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/) {
+      my ($ant,$con,$cond) = ($1,$3,$4);
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      while (m{\${_M}$ant}g$ICASE) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{\${_M}$ant\\G}{$con\${_M}}e$ICASE\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*)==>(.*)/) {
-      $code .= "      if (m{\${_M}$1}) {\n";
-      $code .= "        s{\${_M}$1}{$2\${_M}};\n";
+    } elsif ($rule =~ m/(.*?)(=i?=>)(.*)/) {
+      my ($ant,$con) = ($1,$3);
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{\${_M}$ant}$ICASE) {\n";
+      $code .= "        s{\${_M}$ant}{$con\${_M}}$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*)=e(?:val)?=>(.*)/) {
-      $code .= "      if (m{\${_M}$1}) {\n";
-      $code .= "        s{\${_M}$1}{($2).\"\$_M\"}e;\n";
+    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/) {
+      my ($ant,$con) = ($1,$3);
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{\${_M}$ant}$ICASE) {\n";
+      $code .= "        s{\${_M}$ant}{($con).\"\$_M\"}e$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
     }
   }
   ##---
+
+
+  # Make it walk...
+  $code .= "      if (m{\${_M}.}) {\n";
+  $code .= "        s{\${_M}(.)}{\$1\${_M}};\n";
+  $code .= "        \$modified = 1;\n";
+  $code .= "        next\n";
+  $code .= "      }\n";
+
+
 
   $code .= "    }\n";
   $code .= "    s/\$_M\$//;\n";
@@ -110,48 +134,75 @@ sub _rules {
 
   ##---
 
+  my $ICASE = "";
+
   my @rules = split /\n/, $rules;
+
   for my $rule (@rules) {
-    if($rule =~ m/(.*)==>(.*)!!(.*)/) {
-      $code .= "      while (m{$1}g) {\n";
-      $code .= "        if ($3) {\n";
-      $code .= "          s{$1\\G}{$2};\n";
+
+    if($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
+      my ($ant,$con,$cond) = ($1,$3,$4);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      while (m{$ant}g$ICASE) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{$ant\\G}{$con}$ICASE;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
       $code .= "      }\n";
 
-    } elsif($rule =~ m/(.*)=e(?:val)?=>(.*)!!(.*)/) {
-      $code .= "      while (m{$1}g) {\n";
-      $code .= "        if ($3) {\n";
-      $code .= "          s{$1\\G}{$2}e;\n";
+    } elsif($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/) {
+      my ($ant,$con,$cond) = ($1,$3,$4);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      while (m{$ant}g$ICASE) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{$ant\\G}{$con}e${ICASE};\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*)==>(.*)/) {
-      $code .= "      if (m{$1}) {\n";
-      $code .= "        s{$1}{$2};\n";
+    } elsif ($rule =~ m/(.*?)(=i?=>)(.*)/) {
+      my ($ant,$con) = ($1,$3);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{$ant}$ICASE) {\n";
+      $code .= "        s{$ant}{$con}$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
 
-    } elsif ($rule =~ m/(.*)=e(?:val)?=>(.*)/) {
-      $code .= "      if (m{$1}) {\n";
-      $code .= "        s{$1}{$2}e;\n";
+    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/) {
+      my ($ant,$con) = ($1,$3);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{$ant}$ICASE) {\n";
+      $code .= "        s{$ant}{$con}e$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
 
     } elsif($rule =~ m/=b(?:egin)?=>(.*)/) {
+
       my $ac = $1;
       $code =~ s/(#__$count#\n)/$ac;\n$1/;
 
-    } elsif($rule =~ m/(.*)=l(ast)?=>/) {
-      $code .= "      if (m{$1}) {\n";
+    } elsif($rule =~ m/(.*?)(=(i=)?l(ast)?=>)/) {
+      my ($ant) = ($1);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{$ant}$ICASE) {\n";
       $code .= "        last\n";
       $code .= "      }\n";
+    } else {
+      warn "Unknown rule: $rule\n";
     }
   }
 
@@ -257,6 +308,10 @@ José João Almeida, C<< <jjoao@cpan.org> >>
 
 =head1 BUGS
 
+We know documentation is missing and you all want to use this module.
+In fact we are using it a lot, what explains why we don't have the
+time to write documentation.
+
 Please report any bugs or feature requests to
 C<bug-text-rewrite@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically
@@ -268,7 +323,7 @@ Damian Conway for Filter::Simple
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2004 Alberto Simões and José João Almeida, All Rights Reserved.
+Copyright 2004-2005 Alberto Simões and José João Almeida, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Text::RewriteRules;
 
 ## Replace
@@ -47,3 +47,12 @@ a==>b!!1
 ENDRULES
 
 is(third("bab"),"bbb");
+
+
+## use of flag instead of MRULES
+RULES/m fourth
+b==>bb
+r==>
+ENDRULES
+
+is(fourth("bar"),"bba");

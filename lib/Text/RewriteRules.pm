@@ -1,5 +1,6 @@
 package Text::RewriteRules;
 
+use Data::Dumper;
 use Filter::Simple;
 
 use warnings;
@@ -11,11 +12,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -35,7 +36,7 @@ my $DEBUG = 0;
 our $count = 0;
 
 sub _mrules {
-  my ($name, $rules) = @_;
+  my ($conf, $name, $rules) = @_;
   ++$count;
 
   my $code = "sub $name {\n";
@@ -96,6 +97,8 @@ sub _mrules {
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
+    } else {
+      warn "Unknown rule: $rule\n" unless $rule =~ m!^\s*(#|$)!;
     }
   }
   ##---
@@ -120,7 +123,7 @@ sub _mrules {
 }
 
 sub _rules {
-  my ($name, $rules) = @_;
+  my ($conf,$name, $rules) = @_;
   ++$count;
 
   my $code = "sub $name {\n";
@@ -134,11 +137,13 @@ sub _rules {
 
   ##---
 
-  my $ICASE = "";
+  my $DICASE = exists($conf->{i})?"i":"";
 
   my @rules = split /\n/, $rules;
 
   for my $rule (@rules) {
+
+    my $ICASE = $DICASE;
 
     if($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
       my ($ant,$con,$cond) = ($1,$3,$4);
@@ -202,7 +207,7 @@ sub _rules {
       $code .= "        last\n";
       $code .= "      }\n";
     } else {
-      warn "Unknown rule: $rule\n";
+      warn "Unknown rule: $rule\n" unless $rule =~ m!^\s*(#|$)!;
     }
   }
 
@@ -221,8 +226,20 @@ FILTER {
 
   print STDERR "BEFORE>>>>\n$_\n<<<<\n" if $DEBUG;
 
-  s!^RULES (\w+)\n((?:.|\n)*?)^ENDRULES! _rules($1,$2)!gem;
-  s!^MRULES (\w+)\n((?:.|\n)*?)^ENDRULES!_mrules($1,$2)!gem;
+
+  s!^MRULES (\w+)\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
+
+  s{^RULES((?:\/\w+)?) (\w+)\n((?:.|\n)*?)^ENDRULES}{
+     my ($a,$b,$c) = ($1,$2,$3);
+     my $conf = {map {($_=>$_)} split //,$a};
+     if (exists($conf->{'m'})) {
+       _mrules($conf,$b,$c)
+     } else {
+       _rules($conf,$b,$c)
+     }
+   }gem;
+
+
 
   print STDERR "AFTER>>>>\n$_\n<<<<\n" if $DEBUG;
 

@@ -1,5 +1,11 @@
 Revision history for Text-RewriteRules
 
+0.05    2005, Feb 21 (17:20)
+	- Added RULES/m as option for MRULES;
+	- Added RULES/i flag for ignore case;
+	- Added flag support on RULES line;
+        - Support for empty lines and/or comments;
+
 0.04    2005, Feb 18 (17:25)
 	- Missing commas on generated code giving problems.
 

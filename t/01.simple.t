@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 43;
+use Test::More tests => 52;
 use Text::RewriteRules;
 
 ## Replace
@@ -155,3 +155,42 @@ ENDRULES
 is(iseventh("b"),"bBBBBB");
 
 
+
+
+### --- ###
+
+# ignore and NOT ignore
+
+RULES eigth
+a=i=>c
+b==>d
+ENDRULES
+
+is(eigth("abc"),"cdc");
+is(eigth("Abc"),"cdc");
+is(eigth("aBc"),"cBc");
+
+# ignore all
+
+RULES/i ieigth
+a==>c
+b==>d
+ENDRULES
+
+
+is(ieigth("abc"),"cdc");
+is(ieigth("Abc"),"cdc");
+is(ieigth("aBc"),"cdc");
+
+
+# ignore all... =i= does nothing
+
+RULES/i iieigth
+a=i=>c
+b==>d
+ENDRULES
+
+
+is(iieigth("abc"),"cdc");
+is(iieigth("Abc"),"cdc");
+is(iieigth("aBc"),"cdc");

@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.04    2005, Feb 18 (17:25)
+	- Missing commas on generated code giving problems.
+
 0.03    2005, Feb 15 (16:34)
 	- Corrected bug: mark walking code missing
 	- Added support for ignore case

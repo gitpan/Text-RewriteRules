@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Text::RewriteRules;
 
 ## Replace
@@ -39,3 +39,11 @@ r==>
 ENDRULES
 
 is(isecond("Bar"),"BBa");
+
+
+
+MRULES third
+a==>b!!1
+ENDRULES
+
+is(third("bab"),"bbb");

@@ -11,11 +11,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -180,7 +180,74 @@ FILTER {
 
 =head1 TUTORIAL
 
-Under development
+At the moment, just a set of commented examples.
+
+=head1 Conversion between numbers and words
+
+Yes, you can use L<Lingua::PT::Nums2Words> and similar (for other
+languages). Meanwhile, before it existed we needed to write such a
+conversion tool.
+
+Here I present a subset of the rules (for numbers bellow 1000). The
+generated text is Portuguese but I think you can get the idea. I'll
+try to create a version for English very soon.
+
+You can check the full code on the samples directory (file
+C<num2words>).
+
+  use Text::RewriteRules;
+
+  RULES num2words
+  100==>cem 
+  1(\d\d)==>cento e $1 
+  0(\d\d)==>$1
+  200==>duzentos 
+  300==>trezentos 
+  400==>quatrocentos 
+  500==>quinhentos 
+  600==>seiscentos 
+  700==>setecentos 
+  800==>oitocentos 
+  900==>novecentos 
+  (\d)(\d\d)==>${1}00 e $2
+
+  10==>dez 
+  11==>onze 
+  12==>doze 
+  13==>treze 
+  14==>catorze 
+  15==>quinze 
+  16==>dezasseis 
+  17==>dezassete 
+  18==>dezoito 
+  19==>dezanove 
+  20==>vinte 
+  30==>trinta 
+  40==>quarenta 
+  50==>cinquenta 
+  60==>sessenta 
+  70==>setenta 
+  80==>oitenta 
+  90==>noventa 
+  0(\d)==>$1
+  (\d)(\d)==>${1}0 e $2
+
+  1==>um 
+  2==>dois 
+  3==>três 
+  4==>quatro 
+  5==>cinco 
+  6==>seis 
+  7==>sete 
+  8==>oito 
+  9==>nove 
+  0$==>zero 
+  0==> 
+    ==> 
+   ,==>,
+  ENDRULES
+
+  num2words(123); # returnes "cento e vinte e três"
 
 =head1 AUTHOR
 

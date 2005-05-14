@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.09    2005, May 14 (14:30)
+	- Corrected evaluation rules on mark approach
+
 0.08    2005, Mar 06 (20:13)
 	- Added RULES/x flag -- needs some more tests
 

@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Text::RewriteRules;
 
 ## Replace
@@ -56,3 +56,12 @@ r==>
 ENDRULES
 
 is(fourth("bar"),"bba");
+
+## Eval
+MRULES fifth
+b=eval=>$a = log(2); $a = sin($a);'b' x 2
+r==>
+ENDRULES
+
+is(fifth("bar"),"bba");
+

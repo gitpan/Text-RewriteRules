@@ -12,11 +12,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.08
+Version 0.09
 
 =cut
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 =head1 SYNOPSIS
 
@@ -209,7 +209,7 @@ sub _mrules {
 
       $code .= "      while (m{\${_M}$ant}g$ICASE) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{\${_M}$ant\\G}{$con\${_M}}e$ICASE;\n";
+      $code .= "          s{\${_M}$ant\\G}{eval{$con}.\${_M}}e$ICASE;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
@@ -230,7 +230,7 @@ sub _mrules {
       $ICASE = "i" if $2 =~ m!i!;
 
       $code .= "      if (m{\${_M}$ant}$ICASE) {\n";
-      $code .= "        s{\${_M}$ant}{($con).\"\$_M\"}e$ICASE;\n";
+      $code .= "        s{\${_M}$ant}{eval{$con}.\"\$_M\"}e$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
@@ -251,7 +251,7 @@ sub _mrules {
 
 
   $code .= "    }\n";
-  $code .= "    s/\$_M\$//;\n";
+  $code .= "    s/\$_M//;\n";
   $code .= "  }\n";
   $code .= "  return \$p;\n";
   $code .= "}\n";

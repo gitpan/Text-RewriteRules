@@ -12,28 +12,56 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.09
+Version 0.10
 
 =cut
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
     use Text::RewriteRules;
 
     RULES email
-    .==> DOT 
+    \.==> DOT 
     @==> AT 
     ENDRULES
 
     email("ambs@cpan.org") # returns ambs AT cpan DOT org
+
+    RULES/m inc
+    (\d+)=e=> $1+1 
+    ENDRULE
+
+    inc("I saw 11 cats and 23 docs") # returns I saw 12 cats and 24 docs
 
 =head1 ABSTRACT
 
 This module uses a simplified syntax for regexp-based rules for
 rewriting text. You define a set of rules, and the system applies them
 until no more rule can be applied.
+
+Two variants are provided: 
+
+=over 4
+
+=item 1
+
+traditional rewrite (RULES function):
+
+ while it is possible do substitute
+ | apply first substitution rule 
+
+=item 2
+
+cursor based rewrite (RULES/m function):
+
+ add a cursor to the begining of the string
+ while not reach end of string
+ | apply substitute just after cursor and advance cursor
+ | or advance cursor if no rule can be applied
+
+=back
 
 =head1 DESCRIPTION
 
@@ -164,11 +192,37 @@ LHS:
 
 This way, the rules iterate until the string matches with C<foobar>.
 
+=head2 Rules with /x mode
+
+It is possible to use the regular expressions /x mode in the rewrite rules.
+In this case:
+
+=over 4
+
+=item 1
+
+there must be an empty line between rules
+
+=item 2
+
+you can insert space and line breaks into the regular expression:
+
+ RULES/x f1
+ (\d+) 
+ (\d{3}) 
+ (000) 
+ ==>$1 milhao e $2 mil!! $1 == 1
+
+ ENDRULES
+
+=back
+
 =cut
 
-my $DEBUG = 0;
+our $DEBUG = 0;
 
 our $count = 0;
+
 
 sub _mrules {
   my ($conf, $name, $rules) = @_;
@@ -184,6 +238,11 @@ sub _mrules {
   $code .= "    \$_ = \$_M.\$_;\n";
   $code .= "    #__$count#\n";
   $code .= "    MAIN: while (\$modified) {\n";
+
+  if ($DEBUG) {
+    $code .= "      print STDERR \" >\$_\\n\";\n"
+  }
+
   $code .= "      \$modified = 0;\n";
 
   my $ICASE = "";
@@ -395,6 +454,10 @@ FILTER {
 
 At the moment, just a set of commented examples.
 
+Example1 -- from number to portuguese words  (usint tradicional rewriting)
+
+Example2 -- Naif translator (using cursor-based rewriting)
+
 =head1 Conversion between numbers and words
 
 Yes, you can use L<Lingua::PT::Nums2Words> and similar (for other
@@ -460,7 +523,31 @@ C<num2words>).
    ,==>,
   ENDRULES
 
-  num2words(123); # returnes "cento e vinte e três"
+  num2words(123); # returns "cento e vinte e três"
+
+=head2 Naif translator (using cursor-based rewriting)
+
+ use Text::RewriteRules;
+ %dict=(driver=>"motorista",
+        the=>"o",
+        of=>"de",
+        car=>"carro");
+
+ $word='\b\w+\b';
+
+ if( b(a("I see the Driver of the car")) eq "(I) (see) o Motorista do carro" )
+      {print "ok\n"}
+ else {print "ko\n"}
+
+ RULES/m a
+ ($word)==>$dict{$1}!!                  defined($dict{$1})
+ ($word)=e=> ucfirst($dict{lc($1)}) !!  defined($dict{lc($1)})
+ ($word)==>($1)
+ ENDRULES
+
+ RULES/m b
+ \bde o\b==>do
+ ENDRULES
 
 =head1 AUTHOR
 

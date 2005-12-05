@@ -1,5 +1,10 @@
 Revision history for Text-RewriteRules
 
+0.10    2005, Dec  5 (19:40)
+	- Corrected problems with cursor mode
+	- Some more examples and tests
+	- Some documentation for the cursor mode
+
 0.09    2005, May 14 (14:30)
 	- Corrected evaluation rules on mark approach
 

@@ -7,6 +7,7 @@ WriteMakefile(
     AUTHOR              => 'Alberto Simões <ambs@cpan.org>',
     VERSION_FROM        => 'lib/Text/RewriteRules.pm',
     ABSTRACT_FROM       => 'lib/Text/RewriteRules.pm',
+    EXE_FILES         => [ "scripts/textrr" ],
     PL_FILES            => {},
     PREREQ_PM => {
         'Filter::Simple' => 0.78,

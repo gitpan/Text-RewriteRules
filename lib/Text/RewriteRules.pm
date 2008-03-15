@@ -12,11 +12,11 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =head1 VERSION
 
-Version 0.10
+Version 0.11
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -27,13 +27,13 @@ our $VERSION = '0.10';
     @==> AT 
     ENDRULES
 
-    email("ambs@cpan.org") # returns ambs AT cpan DOT org
+    print email("ambs@cpan.org") # prints ambs AT cpan DOT org
 
     RULES/m inc
-    (\d+)=e=> $1+1 
-    ENDRULE
+    (\d+)=e=> $1+1
+    ENDRULES
 
-    inc("I saw 11 cats and 23 docs") # returns I saw 12 cats and 24 docs
+    print inc("I saw 11 cats and 23 dogs") # prints I saw 12 cats and 24 dogs
 
 =head1 ABSTRACT
 
@@ -284,6 +284,11 @@ sub _mrules {
       $code .= "        next\n";
       $code .= "      }\n";
 
+    } elsif($rule =~ m/=b(?:egin)?=>(.*)/s) {
+
+      my $ac = $1;
+      $code =~ s/(#__$count#\n)/$ac;\n$1/;
+
     } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/) {
       my ($ant,$con) = ($1,$3);
       $ICASE = "i" if $2 =~ m!i!;
@@ -449,6 +454,26 @@ FILTER {
 
   $_
 };
+
+sub _compiler{
+
+  local $/ = undef;
+  $_ = <>;
+
+  s!^MRULES (\w+)\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
+
+  s{^RULES((?:\/\w+)?) (\w+)\n((?:.|\n)*?)^ENDRULES}{
+     my ($a,$b,$c) = ($1,$2,$3);
+     my $conf = {map {($_=>$_)} split //,$a};
+     if (exists($conf->{'m'})) {
+       _mrules($conf,$b,$c)
+     } else {
+       _rules($conf,$b,$c)
+     }
+   }gem;
+
+  print $_
+}
 
 =head1 TUTORIAL
 

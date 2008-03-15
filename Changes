@@ -1,5 +1,9 @@
 Revision history for Text-RewriteRules
 
+0.11    2008, Mar 15 (14:30)
+	- Added support to the =b=> begin rule;
+	- added a compiler
+
 0.10    2005, Dec  5 (19:40)
 	- Corrected problems with cursor mode
 	- Some more examples and tests

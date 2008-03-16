@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.12    2008, Mar 16 (14:30)
+	- missing an entry on MANIFEST
+
 0.11    2008, Mar 15 (14:30)
 	- Added support to the =b=> begin rule;
 	- added a compiler

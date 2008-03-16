@@ -13,3 +13,4 @@ samples/num2words
 samples/num2wordsx
 samples/naif_translator
 t/03.mline.t
+scripts/textrr

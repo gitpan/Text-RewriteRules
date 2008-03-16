@@ -1,0 +1,5 @@
+#!/usr/bin/perl
+
+use Text::RewriteRules;
+use strict;
+Text::RewriteRules::_compiler();

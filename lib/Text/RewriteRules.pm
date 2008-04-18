@@ -10,13 +10,9 @@ use strict;
 
 Text::RewriteRules - A system to rewrite text using regexp-based rules
 
-=head1 VERSION
-
-Version 0.12
-
 =cut
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =head1 SYNOPSIS
 
@@ -220,15 +216,14 @@ you can insert space and line breaks into the regular expression:
 =cut
 
 our $DEBUG = 0;
-
 our $count = 0;
-
+our $NL = qr/\r?\n\r?/;
 
 sub _mrules {
   my ($conf, $name, $rules) = @_;
   ++$count;
 
-  chomp($rules);
+  $rules =~ s/$NL$//;
 
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
@@ -248,7 +243,7 @@ sub _mrules {
   my $ICASE = "";
 
   ##---
-  my @rules = split /\n/, $rules;
+  my @rules = split /$NL/, $rules;
   for my $rule (@rules) {
     if ($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
       my ($ant,$con,$cond) = ($1,$3,$4);
@@ -327,8 +322,9 @@ sub _rules {
   my ($conf,$name, $rules) = @_;
   ++$count;
 
-  chomp($rules);
-
+  #chomp($rules);
+  $rules =~ s/$NL$//;
+  
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
   $code .= "  for (\$p) {\n";
@@ -345,9 +341,9 @@ sub _rules {
 
   my @rules;
   if ($DX eq "x") {
-    @rules = split /\n\n/, $rules;
+    @rules = split /$NL$NL/, $rules;
   } else {
-    @rules = split /\n/, $rules;
+    @rules = split /$NL/, $rules;
   }
 
   for my $rule (@rules) {
@@ -436,9 +432,9 @@ FILTER {
   print STDERR "BEFORE>>>>\n$_\n<<<<\n" if $DEBUG;
 
 
-  s!^MRULES (\w+)\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
+  s!^MRULES +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
-  s{^RULES((?:\/\w+)?) (\w+)\n((?:.|\n)*?)^ENDRULES}{
+  s{^RULES((?:\/\w+)?) +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES}{
      my ($a,$b,$c) = ($1,$2,$3);
      my $conf = {map {($_=>$_)} split //,$a};
      if (exists($conf->{'m'})) {
@@ -460,9 +456,9 @@ sub _compiler{
   local $/ = undef;
   $_ = <>;
 
-  s!^MRULES (\w+)\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
+  s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
-  s{^RULES((?:\/\w+)?) (\w+)\n((?:.|\n)*?)^ENDRULES}{
+  s{^RULES((?:\/\w+)?) +(\w+)\s*\n((?:.|\n)*?)^ENDRULES}{
      my ($a,$b,$c) = ($1,$2,$3);
      my $conf = {map {($_=>$_)} split //,$a};
      if (exists($conf->{'m'})) {

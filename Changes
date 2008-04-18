@@ -1,5 +1,9 @@
 Revision history for Text-RewriteRules
 
+0.13    2008, Apr 18 (15:50)
+	- Added support for some spaces between RULES and the rule identifier.
+	- Support scripts written under MS OSes that still use carriage returns. 
+
 0.12    2008, Mar 16 (14:30)
 	- missing an entry on MANIFEST
 

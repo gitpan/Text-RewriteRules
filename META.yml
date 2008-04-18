@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Text-RewriteRules
-version:             0.12
+version:             0.13
 abstract:            A system to rewrite text using regexp-based rules
 license:             ~
 author:              

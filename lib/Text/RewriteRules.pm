@@ -12,7 +12,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =head1 SYNOPSIS
 
@@ -218,6 +218,8 @@ you can insert space and line breaks into the regular expression:
 our $DEBUG = 0;
 our $count = 0;
 our $NL = qr/\r?\n\r?/;
+
+our $lexer_input = undef;
 
 sub _mrules {
   my ($conf, $name, $rules) = @_;
@@ -426,6 +428,138 @@ sub _rules {
   $code;
 }
 
+sub _lrules {
+  my ($conf,$name, $rules) = @_;
+  ++$count;
+
+  #chomp($rules);
+  $rules =~ s/$NL$//;
+  
+	my $code = "sub ${name}_init {\n";
+	$code .= "  my \$p = shift;\n";
+	$code .= "  \$lexer_input = \$p;\n";
+	$code .= "  return 1;\n";
+	$code .= "}\n\n";
+
+  $code .= "sub $name {\n";
+  $code .= "  return undef if not defined \$lexer_input;\n";
+  $code .= "  print STDERR \$_;\n" if $DEBUG > 1;
+  $code .= "  for (\$lexer_input) {\n";
+
+  ##---
+
+  my $DICASE = exists($conf->{i})?"i":"";
+  my $DX = exists($conf->{x})?"x":"";
+
+  my @rules;
+  if ($DX eq "x") {
+    @rules = split /$NL$NL/, $rules;
+  } else {
+    @rules = split /$NL/, $rules;
+  }
+
+  for my $rule (@rules) {
+
+    my $ICASE = $DICASE;
+
+		if ($rule =~ m/=EOF=>(.*)/s) {
+
+			my $act = $1;			
+			$code .= "      if (m{^\$}) {\n";
+			$code .= "         \$lexer_input = undef;\n";
+			$code .= "         return \"$act\";\n";
+			$code .= "      }\n";
+
+		} elsif ($rule =~ m/=EOF=e=>(.*)/s) {
+
+			my $act = $1;
+			$code .= "      if (m{^\$}) {\n";
+			$code .= "         \$lexer_input = undef;\n";
+			$code .= "         return $act;\n";
+			$code .= "      }\n";
+			
+		} elsif ($rule =~ m/(.*?)(=(?:i=)?i(?:gnore)?=>)(.*)!!(.*)/s) {
+			my ($ant,$cond) = ($1, $4);
+			
+			$ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{$ant\\G}{}$ICASE$DX;\n";
+      $code .= "          return $name();\n";
+      $code .= "        }\n";
+      $code .= "      }\n";
+
+		} elsif ($rule =~ m/(.*?)(=(?:i=)?i(?:gnore)?=>)(.*)/s) {
+
+			my ($ant) = ($1);
+			
+			$ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
+      $code .= "        s{$ant\\G}{}$ICASE$DX;\n";
+      $code .= "        return $name();\n";
+      $code .= "      }\n";
+
+    } elsif($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/s) {
+      my ($ant,$con,$cond) = ($1,$3,$4);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{$ant\\G}{}$ICASE$DX;\n";
+      $code .= "          return \"$con\"\n";
+      $code .= "        }\n";
+      $code .= "      }\n";
+
+    } elsif($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/s) {
+      my ($ant,$con,$cond) = ($1,$3,$4);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
+      $code .= "        if ($cond) {\n";
+      $code .= "          s{$ant\\G}{}${ICASE}${DX};\n";
+      $code .= "          return $con;\n";
+      $code .= "        }\n";
+      $code .= "      }\n";
+
+    } elsif($rule =~ m/(.*?)(=i?=>)(.*)/s) {
+	
+      my ($ant,$con) = ($1,$3);
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
+      $code .= "        s{$ant\\G}{}$ICASE$DX;\n";
+      $code .= "        return \"$con\"\n";
+      $code .= "      }\n";
+
+    } elsif($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/s) {
+      my ($ant,$con) = ($1,$3);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
+      $code .= "        s{$ant\\G}{}${ICASE}${DX};\n";
+      $code .= "        return $con;\n";
+      $code .= "      }\n";
+
+    } else {
+      warn "Unknown rule in lexer mode: $rule\n" unless $rule =~ m!^\s*(#|$)!;
+    }
+  }
+
+  ##---
+
+  $code .= "  }\n";
+  $code .= "  return undef;\n";
+  $code .= "}\n";
+
+  $code;
+}
+
+
 FILTER {
   return if m!^(\s|\n)*$!;
 
@@ -434,10 +568,14 @@ FILTER {
 
   s!^MRULES +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
+  s!^LRULES +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES!_lrules({}, $1,$2)!gem;
+
   s{^RULES((?:\/\w+)?) +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES}{
      my ($a,$b,$c) = ($1,$2,$3);
      my $conf = {map {($_=>$_)} split //,$a};
-     if (exists($conf->{'m'})) {
+	 if (exists($conf->{'l'})) {
+		_lrules($conf, $b, $c)
+	 } elsif (exists($conf->{'m'})) {
        _mrules($conf,$b,$c)
      } else {
        _rules($conf,$b,$c)
@@ -458,14 +596,18 @@ sub _compiler{
 
   s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
+  s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_lrules({}, $1,$2)!gem;
+
   s{^RULES((?:\/\w+)?) +(\w+)\s*\n((?:.|\n)*?)^ENDRULES}{
-     my ($a,$b,$c) = ($1,$2,$3);
-     my $conf = {map {($_=>$_)} split //,$a};
-     if (exists($conf->{'m'})) {
-       _mrules($conf,$b,$c)
-     } else {
-       _rules($conf,$b,$c)
-     }
+	my ($a,$b,$c) = ($1,$2,$3);
+	my $conf = {map {($_=>$_)} split //,$a};
+	if (exists($conf->{'l'})) {
+		_lrules($conf,$b,$c)
+	} elsif (exists($conf->{'m'})) {
+		_mrules($conf,$b,$c)
+	} else {
+		_rules($conf,$b,$c)
+	}
    }gem;
 
   print $_
@@ -593,7 +735,7 @@ Damian Conway for Filter::Simple
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2004-2005 Alberto Simões and José João Almeida, All Rights Reserved.
+Copyright 2004-2008 Alberto Simões and José João Almeida, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

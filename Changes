@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.14    2008, Nov 15 (11:00)
+   - Added support for lex-style blocks for lexers (LRULES and RULES/l)
+
 0.13    2008, Apr 18 (15:50)
 	- Added support for some spaces between RULES and the rule identifier.
 	- Support scripts written under MS OSes that still use carriage returns. 

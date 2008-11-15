@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => 'Text::RewriteRules',
-    AUTHOR              => 'Alberto Simões <ambs@cpan.org>',
+    AUTHOR              => 'Alberto Simoes <ambs@cpan.org>',
     VERSION_FROM        => 'lib/Text/RewriteRules.pm',
     ABSTRACT_FROM       => 'lib/Text/RewriteRules.pm',
     EXE_FILES         => [ "scripts/textrr" ],

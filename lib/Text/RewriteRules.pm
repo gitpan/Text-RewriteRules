@@ -12,7 +12,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 =head1 SYNOPSIS
 
@@ -219,7 +219,6 @@ our $DEBUG = 0;
 our $count = 0;
 our $NL = qr/\r?\n\r?/;
 
-our $lexer_input = undef;
 
 sub _mrules {
   my ($conf, $name, $rules) = @_;
@@ -478,7 +477,7 @@ sub _lrules {
 			$code .= "         return $act;\n";
 			$code .= "      }\n";
 			
-		} elsif ($rule =~ m/(.*?)(=(?:i=)?i(?:gnore)?=>)(.*)!!(.*)/s) {
+		} elsif ($rule =~ m/(.*?)(=(?:i=)?ignore=>)(.*)!!(.*)/s) {
 			my ($ant,$cond) = ($1, $4);
 			
 			$ICASE = "i" if $2 =~ m!i!;
@@ -565,6 +564,7 @@ FILTER {
 
   print STDERR "BEFORE>>>>\n$_\n<<<<\n" if $DEBUG;
 
+	s!^^!our \$lexer_input = undef;\n!;
 
   s!^MRULES +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
@@ -593,6 +593,8 @@ sub _compiler{
 
   local $/ = undef;
   $_ = <>;
+
+	s!^^!our \$lexer_input = undef;\n!;
 
   s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 

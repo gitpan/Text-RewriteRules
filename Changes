@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.15    2008, Nov 23 (21:27)
+   - Fixed some issues with a global variable.
+
 0.14    2008, Nov 15 (11:00)
    - Added support for lex-style blocks for lexers (LRULES and RULES/l)
 

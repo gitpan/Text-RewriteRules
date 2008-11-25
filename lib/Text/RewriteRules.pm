@@ -12,7 +12,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =head1 SYNOPSIS
 
@@ -219,12 +219,9 @@ our $DEBUG = 0;
 our $count = 0;
 our $NL = qr/\r?\n\r?/;
 
-
 sub _mrules {
   my ($conf, $name, $rules) = @_;
   ++$count;
-
-  $rules =~ s/$NL$//;
 
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
@@ -241,11 +238,19 @@ sub _mrules {
 
   $code .= "      \$modified = 0;\n";
 
-  my $ICASE = "";
+  my $ICASE = exists($conf->{i})?"i":"";
+  my $DX = exists($conf->{x})?"x":"";
 
-  ##---
-  my @rules = split /$NL/, $rules;
+  my @rules;
+  if ($DX eq "x") {
+    @rules = split /$NL$NL/, $rules;
+  } else {
+    @rules = split /$NL/, $rules;
+  }
+
   for my $rule (@rules) {
+		$rule =~ s/$NL$//;
+	
     if ($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
       my ($ant,$con,$cond) = ($1,$3,$4);
       $ICASE = "i" if $2 =~ m!i!;
@@ -322,9 +327,6 @@ sub _mrules {
 sub _rules {
   my ($conf,$name, $rules) = @_;
   ++$count;
-
-  #chomp($rules);
-  $rules =~ s/$NL$//;
   
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
@@ -348,6 +350,7 @@ sub _rules {
   }
 
   for my $rule (@rules) {
+		$rule =~ s/$NL$//;
 
     my $ICASE = $DICASE;
 
@@ -428,22 +431,19 @@ sub _rules {
 }
 
 sub _lrules {
-  my ($conf,$name, $rules) = @_;
+  my ($conf, $name, $rules) = @_;
   ++$count;
-
-  #chomp($rules);
-  $rules =~ s/$NL$//;
   
-	my $code = "sub ${name}_init {\n";
-	$code .= "  my \$p = shift;\n";
-	$code .= "  \$lexer_input = \$p;\n";
+	my $code = "my \$${name}_input = \"\";\n";
+	$code .= "sub ${name}_init {\n";
+	$code .= "  \$${name}_input = shift;\n";
 	$code .= "  return 1;\n";
 	$code .= "}\n\n";
 
   $code .= "sub $name {\n";
-  $code .= "  return undef if not defined \$lexer_input;\n";
+  $code .= "  return undef if not defined \$${name}_input;\n";
   $code .= "  print STDERR \$_;\n" if $DEBUG > 1;
-  $code .= "  for (\$lexer_input) {\n";
+  $code .= "  for (\$${name}_input) {\n";
 
   ##---
 
@@ -458,6 +458,7 @@ sub _lrules {
   }
 
   for my $rule (@rules) {
+		$rule =~ s/$NL$//;
 
     my $ICASE = $DICASE;
 
@@ -465,7 +466,7 @@ sub _lrules {
 
 			my $act = $1;			
 			$code .= "      if (m{^\$}) {\n";
-			$code .= "         \$lexer_input = undef;\n";
+			$code .= "         \$${name}_input = undef;\n";
 			$code .= "         return \"$act\";\n";
 			$code .= "      }\n";
 
@@ -473,7 +474,7 @@ sub _lrules {
 
 			my $act = $1;
 			$code .= "      if (m{^\$}) {\n";
-			$code .= "         \$lexer_input = undef;\n";
+			$code .= "         \$${name}_input = undef;\n";
 			$code .= "         return $act;\n";
 			$code .= "      }\n";
 			
@@ -489,7 +490,7 @@ sub _lrules {
       $code .= "        }\n";
       $code .= "      }\n";
 
-		} elsif ($rule =~ m/(.*?)(=(?:i=)?i(?:gnore)?=>)(.*)/s) {
+		} elsif ($rule =~ m/(.*?)(=(?:i=)?ignore=>)(.*)/s) {
 
 			my ($ant) = ($1);
 			
@@ -564,22 +565,20 @@ FILTER {
 
   print STDERR "BEFORE>>>>\n$_\n<<<<\n" if $DEBUG;
 
-	s!^^!our \$lexer_input = undef;\n!;
-
   s!^MRULES +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
   s!^LRULES +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES!_lrules({}, $1,$2)!gem;
 
   s{^RULES((?:\/\w+)?) +(\w+)\s*?\n((?:.|\n)*?)^ENDRULES}{
-     my ($a,$b,$c) = ($1,$2,$3);
-     my $conf = {map {($_=>$_)} split //,$a};
-	 if (exists($conf->{'l'})) {
-		_lrules($conf, $b, $c)
-	 } elsif (exists($conf->{'m'})) {
-       _mrules($conf,$b,$c)
-     } else {
-       _rules($conf,$b,$c)
-     }
+    my ($a,$b,$c) = ($1,$2,$3);
+    my $conf = {map {($_=>$_)} split //,$a};
+	 	if (exists($conf->{'l'})) {
+			_lrules($conf, $b, $c)
+	 	} elsif (exists($conf->{'m'})) {
+    	_mrules($conf,$b,$c)
+    } else {
+    	_rules($conf,$b,$c)
+    }
    }gem;
 
 
@@ -593,8 +592,6 @@ sub _compiler{
 
   local $/ = undef;
   $_ = <>;
-
-	s!^^!our \$lexer_input = undef;\n!;
 
   s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 

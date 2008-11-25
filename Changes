@@ -1,5 +1,10 @@
 Revision history for Text-RewriteRules
 
+0.16    2008, Nov 25 (19:42)
+   - Workaround with a bug for perl 5.8.x
+   - Added support for multiple lexers at the same time;
+   - Added support to the 'x' flag on the MRULES;
+
 0.15    2008, Nov 23 (21:27)
    - Fixed some issues with a global variable.
 

@@ -22,7 +22,7 @@ RULES/l lex
 ENDRULES
 
 is(lex(),undef);
-lexer_init("ID25");
+lex_init("ID25");
 is_deeply(lex(),["STR","ID"]);
 is_deeply(lex(),["INT", 25]);
 is(lex(),undef);
@@ -43,10 +43,13 @@ is(yylex(),undef);
 
 # (12 tests above)----------------
 
-RULES/l foo
+RULES/lx foo
 IF=e=>("IF","IF")
+
 (\w+)=e=>("ID",$1)
+
 \s+=ignore=>
+
 =EOF=e=>('',undef)
 ENDRULES
 

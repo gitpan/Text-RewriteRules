@@ -13,8 +13,9 @@ is(first("bar"),"bba");
 
 
 ## Replace (ignore case)
-MRULES ifirst
+RULES/mx ifirst
 b=i=>bb
+
 r==>
 ENDRULES
 

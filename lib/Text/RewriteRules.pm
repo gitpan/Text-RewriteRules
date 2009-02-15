@@ -12,7 +12,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =head1 SYNOPSIS
 
@@ -188,6 +188,11 @@ LHS:
 
 This way, the rules iterate until the string matches with C<foobar>.
 
+You can also supply a condition in a last rule:
+
+  RULES bar
+  f(o+)b(a+)r=l=> !! length($1) == 2 * length($2);
+
 =head2 Rules with /x mode
 
 It is possible to use the regular expressions /x mode in the rewrite rules.
@@ -299,6 +304,30 @@ sub _mrules {
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
+
+    } elsif($rule =~ m/(.*?)(=(?:i=)?l(?:ast)?=>\s*!!(.*))/s) {
+      my ($ant,$cond) = ($1,$3);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{\${_M}$ant}$ICASE$DX) {\n";
+			$code .= "        if ($cond) {\n";
+			$code .= "          s{\${_M}}{};\n";
+      $code .= "          last\n";
+			$code .= "        }\n";
+      $code .= "      }\n";
+
+    } elsif($rule =~ m/(.*?)(=(?:i=)?l(?:ast)?=>)/s) {
+      my ($ant) = ($1);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{\${_M}$ant}$ICASE$DX) {\n";
+			$code .= "        s{\${_M}}{};\n";
+      $code .= "        last\n";
+      $code .= "      }\n";
+
+
     } else {
       warn "Unknown rule: $rule\n" unless $rule =~ m!^\s*(#|$)!;
     }
@@ -407,6 +436,17 @@ sub _rules {
       my $ac = $1;
       $code =~ s/(#__$count#\n)/$ac;\n$1/;
 
+    } elsif($rule =~ m/(.*?)(=(i=)?l(ast)?=>\s*!!(.*))/s) {
+      my ($ant,$cond) = ($1,$5);
+
+      $ICASE = "i" if $2 =~ m!i!;
+
+      $code .= "      if (m{$ant}$ICASE$DX) {\n";
+			$code .= "        if ($cond) {\n";
+      $code .= "          last\n";
+      $code .= "        }\n";
+      $code .= "      }\n";
+
     } elsif($rule =~ m/(.*?)(=(i=)?l(ast)?=>)/s) {
       my ($ant) = ($1);
 
@@ -415,6 +455,7 @@ sub _rules {
       $code .= "      if (m{$ant}$ICASE$DX) {\n";
       $code .= "        last\n";
       $code .= "      }\n";
+
     } else {
       warn "Unknown rule: $rule\n" unless $rule =~ m!^\s*(#|$)!;
     }
@@ -734,7 +775,7 @@ Damian Conway for Filter::Simple
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2004-2008 Alberto Simões and José João Almeida, All Rights Reserved.
+Copyright 2004-2009 Alberto Simões and José João Almeida, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

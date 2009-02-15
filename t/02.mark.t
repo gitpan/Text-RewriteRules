@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 7;
+use Test::More tests => 9;
 use Text::RewriteRules;
 
 ## Replace
@@ -66,3 +66,18 @@ ENDRULES
 
 is(fifth("bar"),"bba");
 
+## Simple Last 
+MRULES sixth
+bar==>ugh
+foo=l=>
+ENDRULES
+
+is(sixth("barfoobar"),"ughfoobar");
+
+## Last with condition
+MRULES seventh
+bar==>ugh
+f(o+)=l=>!!length($1)>2
+ENDRULES
+
+is(seventh("barfoobarfooobar"),"ughfooughfooobar");

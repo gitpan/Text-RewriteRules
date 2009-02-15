@@ -1,5 +1,9 @@
 Revision history for Text-RewriteRules
 
+0.17    2009, Fev 15 (00:55)
+   - Added support for conditional last rules on simple RULES blocks.
+   - Added support for conditional and non conditional last rules on MRULES blocks.
+
 0.16    2008, Nov 25 (19:42)
    - Workaround with a bug for perl 5.8.x
    - Added support for multiple lexers at the same time;

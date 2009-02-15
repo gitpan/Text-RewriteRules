@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 52;
+use Test::More tests => 54;
 use Text::RewriteRules;
 
 ## Replace
@@ -194,3 +194,15 @@ ENDRULES
 is(iieigth("abc"),"cdc");
 is(iieigth("Abc"),"cdc");
 is(iieigth("aBc"),"cdc");
+
+
+# Test last with condition
+
+RULES more
+(...)=l=>!!$1 eq "bar"
+ar==>oo
+ENDRULES
+
+is(more("bar"),"bar");
+is(more("arre"),"oore");
+

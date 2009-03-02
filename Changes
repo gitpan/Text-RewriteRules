@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.18    2009, Mar 2 (20:56)
+   - Added parenthesis around regexp so it supports ors nicely.
+
 0.17    2009, Fev 15 (00:55)
    - Added support for conditional last rules on simple RULES blocks.
    - Added support for conditional and non conditional last rules on MRULES blocks.

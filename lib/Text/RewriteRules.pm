@@ -12,7 +12,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =head1 SYNOPSIS
 
@@ -260,9 +260,9 @@ sub _mrules {
       my ($ant,$con,$cond) = ($1,$3,$4);
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      while (m{\${_M}$ant}g$ICASE) {\n";
+      $code .= "      while (m{\${_M}(?:$ant)}g$ICASE) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{\${_M}$ant\\G}{$con\${_M}}$ICASE;\n";
+      $code .= "          s{\${_M}(?:$ant)\\G}{$con\${_M}}$ICASE;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
@@ -272,9 +272,9 @@ sub _mrules {
       my ($ant,$con,$cond) = ($1,$3,$4);
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      while (m{\${_M}$ant}g$ICASE) {\n";
+      $code .= "      while (m{\${_M}(?:$ant)}g$ICASE) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{\${_M}$ant\\G}{eval{$con}.\${_M}}e$ICASE;\n";
+      $code .= "          s{\${_M}(?:$ant)\\G}{eval{$con}.\${_M}}e$ICASE;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
@@ -284,8 +284,8 @@ sub _mrules {
       my ($ant,$con) = ($1,$3);
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{\${_M}$ant}$ICASE) {\n";
-      $code .= "        s{\${_M}$ant}{$con\${_M}}$ICASE;\n";
+      $code .= "      if (m{\${_M}(?:$ant)}$ICASE) {\n";
+      $code .= "        s{\${_M}(?:$ant)}{$con\${_M}}$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
@@ -299,8 +299,8 @@ sub _mrules {
       my ($ant,$con) = ($1,$3);
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{\${_M}$ant}$ICASE) {\n";
-      $code .= "        s{\${_M}$ant}{eval{$con}.\"\$_M\"}e$ICASE;\n";
+      $code .= "      if (m{\${_M}(?:$ant)}$ICASE) {\n";
+      $code .= "        s{\${_M}(?:$ant)}{eval{$con}.\"\$_M\"}e$ICASE;\n";
       $code .= "        \$modified = 1;\n";
       $code .= "        next\n";
       $code .= "      }\n";
@@ -310,7 +310,7 @@ sub _mrules {
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{\${_M}$ant}$ICASE$DX) {\n";
+      $code .= "      if (m{\${_M}(?:$ant)}$ICASE$DX) {\n";
 			$code .= "        if ($cond) {\n";
 			$code .= "          s{\${_M}}{};\n";
       $code .= "          last\n";
@@ -322,7 +322,7 @@ sub _mrules {
 
       $ICASE = "i" if $2 =~ m!i!;
 
-      $code .= "      if (m{\${_M}$ant}$ICASE$DX) {\n";
+      $code .= "      if (m{\${_M}(?:$ant)}$ICASE$DX) {\n";
 			$code .= "        s{\${_M}}{};\n";
       $code .= "        last\n";
       $code .= "      }\n";

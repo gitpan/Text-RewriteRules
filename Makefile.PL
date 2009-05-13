@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+use 5.010000; # 5.10.0
+
 WriteMakefile(
     NAME                => 'Text::RewriteRules',
     AUTHOR              => 'Alberto Simoes <ambs@cpan.org>',

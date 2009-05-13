@@ -1,5 +1,10 @@
 Revision history for Text-RewriteRules
 
+0.19    2009, May 13 (11:52)
+   - Added support for XML automagical tags [[:XML:]] and [[:XML(tag):]];
+   - Added variable +{TAG} when using [[:XML:]];
+   - Compile function removes 'use Text::RewriteRules;'
+
 0.18    2009, Mar 2 (20:56)
    - Added parenthesis around regexp so it supports ors nicely.
 

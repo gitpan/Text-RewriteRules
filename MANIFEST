@@ -21,3 +21,5 @@ t/102.mark.t
 t/103.mline.t
 t/104.lexer.t
 t/105.xml.t
+t/06.parenthesis.t
+t/106.parenthesis.t

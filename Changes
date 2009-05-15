@@ -1,5 +1,9 @@
 Revision history for Text-RewriteRules
 
+0.20    2009, May 15 (21:13)
+   - Added parenthesized expressions (parenthesis, brackets and curly braces);
+   - Fixed XML regular expression (both empty tags and balanceness)
+
 0.19    2009, May 13 (11:52)
    - Added support for XML automagical tags [[:XML:]] and [[:XML(tag):]];
    - Added variable +{TAG} when using [[:XML:]];

@@ -14,7 +14,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =head1 SYNOPSIS
 
@@ -220,22 +220,90 @@ you can insert space and line breaks into the regular expression:
 
 =back
 
+=head1 POWER EXPRESSIONS
+
+To facilitate matching complex languages Text::RewriteRules defines a
+set of regular expressions that you can use (without defining them).
+
+=head2 Parethesis
+
+There are three kind of usual parenthesis: the standard parenthesis,
+brackets or curly braces. You can match a balanced string of
+parenthesis using the power expressions C<[[:PB:]]>, C<[[:BB:]]> and
+C<[[:CBB:]]> for these three kind of parenthesis.
+
+For instance, if you apply this rule:
+
+   [[:BB:]]==>foo
+
+to this string
+
+  something [ a [ b] c [d ]] and somehting more
+
+then, you will get
+
+  something foo and something more
+
+Note that if you apply it to
+
+  something [[ not ] balanced [ here
+
+then you will get
+
+  something [foo balanced [ here
+
+=head2 XML tags
+
+The power expression C<[[:XML:]]> match a XML tag (with or without
+children XML tags. Note that this expression matches only well formed
+XML tags.
+
+As an example, the rule
+
+  [[:XML:]]=>tag
+
+applied to the string
+
+  <a><b></a></b> and <more><img src="foo"/></more>
+
+will result in
+
+  <a><b></a></b> and tag
+
+
 =cut
 
 our $DEBUG = 0;
 our $count = 0;
 our $NL = qr/\r?\n\r?/;
+my %pseudo_classes=(
+ TEXENV => 'TEXENV',
+ PB     => 'PB',
+ BB     => 'BB',
+ CBB    => 'CBB',
+ XML    => 'XMLtree',
+'XML+1' => \&_tag_re,
+);
 
 sub _regular_expressions {
     return <<'EORE';
 my $__XMLattrs = qr/(?:\s+[a-zA-Z0-9:-]+\s*=\s*(?: '[^']+' | "[^"]+" ))*/x;
 my $__XMLempty = qr/<[a-zA-Z0-9:-]+$__XMLattrs\/>/x;
-my $__XMLtree  = qr/(?<XML>
+my $__XMLtree  = qr/$__XMLempty |
+                  (?<XML>
                       <(?<TAG>[a-zA-Z0-9:-]+)$__XMLattrs>
                         (?:  $__XMLempty  |  [^<]++  |  (?&XML) )*+
-                      <\/(?&TAG)>
+                      <\/\k<TAG>>
                   )/x;
 my $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree )*+/x;
+
+my $__CBB = qr{(\{(?:[^\{\}]++|(?-1))*+\})}sx; ## curly brackets block { ... }  FIXME!!!
+my $__BB  = qr{(\[(?:[^\[\]]++|(?-1))*+\])}sx; ##       brackets block [ ... ]  FIXME!!!
+my $__PB  = qr{(\((?:[^\(\)]++|(?-1))*+\))}sx; ##     parentesis block ( ... )  FIXME!!!
+my $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
+my $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+
+
 EORE
 }
 
@@ -248,8 +316,11 @@ sub _tag_re {
 sub _expand_pseudo_classes {
     my $rules = shift;
 
-    $rules =~ s/\[\[:XML:\]\]/\$__XMLtree/g;
-    $rules =~ s/\[\[:XML\(([^\)]+)\):\]\]/_tag_re($1)/ge;
+ $rules =~ s/\[\[:(\w+):\]\]/\$__$pseudo_classes{$1}/g;
+ $rules =~ s/\[\[:(\w+)\(([^,\(\)]+)\):\]\]/$pseudo_classes{"$1+1"}->($2)/ge;
+
+#    $rules =~ s/\[\[:XML:\]\]/\$__XMLtree/g;
+#    $rules =~ s/\[\[:XML\(([^\)]+)\):\]\]/_tag_re($1)/ge;
 
     return $rules;
 }

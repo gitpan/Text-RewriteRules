@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Text::RewriteRules;
 
 RULES first
@@ -22,16 +22,19 @@ RULES third
 [[:XML:]]=e=>$+{TAG}
 ENDRULES
 
-my $in = "ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
+my $in = "<a><b></a></b> ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
 my $in2 = "ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
+my $in3 = "<foo hmm=\"bar\"/>";
 
-is(first($in),"ola XML ola");
+is(first($in),"<a><b></a></b> ola XML ola");
 is(first($in2),"ola XML ola XML ola");
+is(first($in3), "XML");
 
-is(Xsecond($in),"ola <a hmm =\"hmm\"><b>XML<c>o</c></b></a> ola");
-is(Ysecond($in),"ola <a hmm =\"hmm\"><b><d zbr='foo'/>XML</b></a> ola");
-is(Zsecond($in),"ola <a hmm =\"hmm\">XML</a> ola");
+is(Xsecond($in),"<a><b></a></b> ola <a hmm =\"hmm\"><b>XML<c>o</c></b></a> ola");
+is(Ysecond($in),"<a><b></a></b> ola <a hmm =\"hmm\"><b><d zbr='foo'/>XML</b></a> ola");
+is(Zsecond($in),"<a><b></a></b> ola <a hmm =\"hmm\">XML</a> ola");
 is(Zsecond($in2),"ola <a hmm =\"hmm\">XML</a> ola <a hmm =\"hmm\">XML</a> ola");
 
-is(third($in),"ola a ola");
+is(third($in),"<a><b></a></b> ola a ola");
+
 

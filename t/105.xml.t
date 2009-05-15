@@ -1,13 +1,22 @@
 my $__XMLattrs = qr/(?:\s+[a-zA-Z0-9:-]+\s*=\s*(?: '[^']+' | "[^"]+" ))*/x;
 my $__XMLempty = qr/<[a-zA-Z0-9:-]+$__XMLattrs\/>/x;
-my $__XMLtree  = qr/(?<XML>
+my $__XMLtree  = qr/$__XMLempty |
+                  (?<XML>
                       <(?<TAG>[a-zA-Z0-9:-]+)$__XMLattrs>
                         (?:  $__XMLempty  |  [^<]++  |  (?&XML) )*+
-                      <\/(?&TAG)>
+                      <\/\k<TAG>>
                   )/x;
 my $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree )*+/x;
+
+my $__CBB = qr{(\{(?:[^\{\}]++|(?-1))*+\})}sx; ## curly brackets block { ... }  FIXME!!!
+my $__BB  = qr{(\[(?:[^\[\]]++|(?-1))*+\])}sx; ##       brackets block [ ... ]  FIXME!!!
+my $__PB  = qr{(\((?:[^\(\)]++|(?-1))*+\))}sx; ##     parentesis block ( ... )  FIXME!!!
+my $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
+my $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+
+
 # -*- cperl -*-
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 
 sub first {
@@ -100,16 +109,19 @@ sub third {
 }
 
 
-my $in = "ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
+my $in = "<a><b></a></b> ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
 my $in2 = "ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
+my $in3 = "<foo hmm=\"bar\"/>";
 
-is(first($in),"ola XML ola");
+is(first($in),"<a><b></a></b> ola XML ola");
 is(first($in2),"ola XML ola XML ola");
+is(first($in3), "XML");
 
-is(Xsecond($in),"ola <a hmm =\"hmm\"><b>XML<c>o</c></b></a> ola");
-is(Ysecond($in),"ola <a hmm =\"hmm\"><b><d zbr='foo'/>XML</b></a> ola");
-is(Zsecond($in),"ola <a hmm =\"hmm\">XML</a> ola");
+is(Xsecond($in),"<a><b></a></b> ola <a hmm =\"hmm\"><b>XML<c>o</c></b></a> ola");
+is(Ysecond($in),"<a><b></a></b> ola <a hmm =\"hmm\"><b><d zbr='foo'/>XML</b></a> ola");
+is(Zsecond($in),"<a><b></a></b> ola <a hmm =\"hmm\">XML</a> ola");
 is(Zsecond($in2),"ola <a hmm =\"hmm\">XML</a> ola <a hmm =\"hmm\">XML</a> ola");
 
-is(third($in),"ola a ola");
+is(third($in),"<a><b></a></b> ola a ola");
+
 

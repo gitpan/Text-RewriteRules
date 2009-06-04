@@ -1,29 +1,43 @@
-my $__XMLattrs = qr/(?:\s+[a-zA-Z0-9:-]+\s*=\s*(?: '[^']+' | "[^"]+" ))*/x;
-my $__XMLempty = qr/<[a-zA-Z0-9:-]+$__XMLattrs\/>/x;
-my $__XMLtree  = qr/$__XMLempty |
+# -*- cperl -*-
+use Test::More tests => 9;
+
+our $__XMLattrs = qr/(?:
+                      \s+[a-zA-Z0-9:-]+\s*
+                      =
+                      \s*(?: '[^']+' | "[^"]+" ))*/x;
+
+### This (?<PCDATA>\n) is a BIG hack!
+our $__XMLempty = qr/<(?<TAGNAME>[a-zA-Z0-9:-]+)(?<PCDATA>\b)$__XMLattrs\/>/x;
+
+our $__XMLtree2  = qr/$__XMLempty |
                   (?<XML>
                       <(?<TAG>[a-zA-Z0-9:-]+)$__XMLattrs>
                         (?:  $__XMLempty  |  [^<]++  |  (?&XML) )*+
                       <\/\k<TAG>>
                   )/x;
-my $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree )*+/x;
+our $__XMLtree  = qr/$__XMLempty |
+                  (?<XML>
+                      <(?<TAGNAME>[a-zA-Z0-9:-]+)$__XMLattrs>
+                        (?<PCDATA>(?:  $__XMLempty  |  [^<]++  |  $__XMLtree2 )*+)
+                      <\/\k<TAGNAME>>
+                  )/x;
+our $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree2 )*+/x;
 
-my $__CBB = qr{(\{(?:[^\{\}]++|(?-1))*+\})}sx; ## curly brackets block { ... }  FIXME!!!
-my $__BB  = qr{(\[(?:[^\[\]]++|(?-1))*+\])}sx; ##       brackets block [ ... ]  FIXME!!!
-my $__PB  = qr{(\((?:[^\(\)]++|(?-1))*+\))}sx; ##     parentesis block ( ... )  FIXME!!!
-my $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-my $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
+our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
+our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
+
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
 
 
-# -*- cperl -*-
-use Test::More tests => 6;
 
 
 sub first {
   my $p = shift;
   for ($p) {
     my $modified = 1;
-    #__38#
+    #__39#
     MAIN: while($modified) {
       $modified = 0;
       if (m{$__PB}) {
@@ -41,7 +55,7 @@ sub second {
   my $p = shift;
   for ($p) {
     my $modified = 1;
-    #__39#
+    #__40#
     MAIN: while($modified) {
       $modified = 0;
       if (m{$__BB}) {
@@ -59,11 +73,65 @@ sub third {
   my $p = shift;
   for ($p) {
     my $modified = 1;
-    #__40#
+    #__41#
     MAIN: while($modified) {
       $modified = 0;
       if (m{$__CBB}) {
         s{$__CBB}{#};
+        $modified = 1;
+        next
+      }
+    }
+  }
+  return $p;
+}
+
+
+sub fourth {
+  my $p = shift;
+  for ($p) {
+    my $modified = 1;
+    #__42#
+    MAIN: while($modified) {
+      $modified = 0;
+      if (m{$__CBB}) {
+        s{$__CBB}{[$+{CBB}]};
+        $modified = 1;
+        next
+      }
+    }
+  }
+  return $p;
+}
+
+
+sub fifth {
+  my $p = shift;
+  for ($p) {
+    my $modified = 1;
+    #__43#
+    MAIN: while($modified) {
+      $modified = 0;
+      if (m{$__BB}) {
+        s{$__BB}{{$+{BB}}};
+        $modified = 1;
+        next
+      }
+    }
+  }
+  return $p;
+}
+
+
+sub sixth {
+  my $p = shift;
+  for ($p) {
+    my $modified = 1;
+    #__44#
+    MAIN: while($modified) {
+      $modified = 0;
+      if (m{$__PB}) {
+        s{$__PB}{{$+{PB}}};
         $modified = 1;
         next
       }
@@ -94,10 +162,7 @@ is(second($on2),"ola * lua ***[aaa** ola");
 is(third($un),"ola # munto ## ola");
 is(third($un2),"ola # lua ###{aaa## ola");
 
-#is(second($in),"ola <a hmm =\"hmm\"><b>XML<c>o</c></b></a> ola");
-#is(second($in),"ola <a hmm =\"hmm\"><b><d zbr='foo'/>XML</b></a> ola");
-#is(second($in),"ola <a hmm =\"hmm\">XML</a> ola");
-#is(second($in2),"ola <a hmm =\"hmm\">XML</a> ola <a hmm =\"hmm\">XML</a> ola");
-
-#is(third($in),"ola a ola");
+is(fourth("{ xpto } {{"),"[ xpto ] {{");
+is(fifth("]] [xpto] {{"),"]] {xpto} {{");
+is(sixth("((xpto)(xpto){{"),"({xpto}{xpto}{{");
 

@@ -1,5 +1,5 @@
 # -*- cperl -*-
-use Test::More tests => 8;
+use Test::More tests => 10;
 use Text::RewriteRules;
 
 RULES first
@@ -19,7 +19,11 @@ RULES Zsecond
 ENDRULES
 
 RULES third
-[[:XML:]]=e=>$+{TAG}
+[[:XML:]]=e=>$+{TAGNAME}
+ENDRULES
+
+RULES Xthird
+[[:XML:]]=e=>$+{PCDATA}
 ENDRULES
 
 my $in = "<a><b></a></b> ola <a hmm =\"hmm\"><b><d zbr='foo'/><c>o</c></b></a> ola";
@@ -36,5 +40,7 @@ is(Zsecond($in),"<a><b></a></b> ola <a hmm =\"hmm\">XML</a> ola");
 is(Zsecond($in2),"ola <a hmm =\"hmm\">XML</a> ola <a hmm =\"hmm\">XML</a> ola");
 
 is(third($in),"<a><b></a></b> ola a ola");
+is(third($in3),"foo");
+is(Xthird($in),"<a><b></a></b> ola o ola");
 
 

@@ -14,7 +14,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -277,31 +277,45 @@ our $DEBUG = 0;
 our $count = 0;
 our $NL = qr/\r?\n\r?/;
 my %pseudo_classes=(
- TEXENV => 'TEXENV',
- PB     => 'PB',
- BB     => 'BB',
- CBB    => 'CBB',
- XML    => 'XMLtree',
-'XML+1' => \&_tag_re,
+                    TEXENV => 'TEXENV',
+                    PB     => 'PB',
+                    BB     => 'BB',
+                    CBB    => 'CBB',
+                    XML    => 'XMLtree',
+                    'XML+1' => \&_tag_re,
 );
 
 sub _regular_expressions {
     return <<'EORE';
-my $__XMLattrs = qr/(?:\s+[a-zA-Z0-9:-]+\s*=\s*(?: '[^']+' | "[^"]+" ))*/x;
-my $__XMLempty = qr/<[a-zA-Z0-9:-]+$__XMLattrs\/>/x;
-my $__XMLtree  = qr/$__XMLempty |
+
+our $__XMLattrs = qr/(?:
+                      \s+[a-zA-Z0-9:-]+\s*
+                      =
+                      \s*(?: '[^']+' | "[^"]+" ))*/x;
+
+### This (?<PCDATA>\n) is a BIG hack!
+our $__XMLempty = qr/<(?<TAGNAME>[a-zA-Z0-9:-]+)(?<PCDATA>\b)$__XMLattrs\/>/x;
+
+our $__XMLtree2  = qr/$__XMLempty |
                   (?<XML>
                       <(?<TAG>[a-zA-Z0-9:-]+)$__XMLattrs>
                         (?:  $__XMLempty  |  [^<]++  |  (?&XML) )*+
                       <\/\k<TAG>>
                   )/x;
-my $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree )*+/x;
+our $__XMLtree  = qr/$__XMLempty |
+                  (?<XML>
+                      <(?<TAGNAME>[a-zA-Z0-9:-]+)$__XMLattrs>
+                        (?<PCDATA>(?:  $__XMLempty  |  [^<]++  |  $__XMLtree2 )*+)
+                      <\/\k<TAGNAME>>
+                  )/x;
+our $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree2 )*+/x;
 
-my $__CBB = qr{(\{(?:[^\{\}]++|(?-1))*+\})}sx; ## curly brackets block { ... }  FIXME!!!
-my $__BB  = qr{(\[(?:[^\[\]]++|(?-1))*+\])}sx; ##       brackets block [ ... ]  FIXME!!!
-my $__PB  = qr{(\((?:[^\(\)]++|(?-1))*+\))}sx; ##     parentesis block ( ... )  FIXME!!!
-my $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-my $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
+our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
+our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
+
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
 
 
 EORE
@@ -316,18 +330,15 @@ sub _tag_re {
 sub _expand_pseudo_classes {
     my $rules = shift;
 
- $rules =~ s/\[\[:(\w+):\]\]/\$__$pseudo_classes{$1}/g;
- $rules =~ s/\[\[:(\w+)\(([^,\(\)]+)\):\]\]/$pseudo_classes{"$1+1"}->($2)/ge;
-
-#    $rules =~ s/\[\[:XML:\]\]/\$__XMLtree/g;
-#    $rules =~ s/\[\[:XML\(([^\)]+)\):\]\]/_tag_re($1)/ge;
+    $rules =~ s/\[\[:(\w+):\]\]/\$__$pseudo_classes{$1}/g;
+    $rules =~ s/\[\[:(\w+)\(([^,\(\)]+)\):\]\]/$pseudo_classes{"$1+1"}->($2)/ge;
 
     return $rules;
 }
 
 sub _mrules {
-  my ($conf, $name, $rules) = @_;
-  ++$count;
+    my ($conf, $name, $rules) = @_;
+    ++$count;
 
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
@@ -440,8 +451,8 @@ sub _mrules {
   ##---
 
   # Make it walk...
-  $code .= "      if (m{\${_M}.}) {\n";
-  $code .= "        s{\${_M}(.)}{\$1\${_M}};\n";
+  $code .= "      if (m{\${_M}(.|\\n)}) {\n";
+  $code .= "        s{\${_M}(.|\\n)}{\$1\${_M}};\n";
   $code .= "        \$modified = 1;\n";
   $code .= "        next\n";
   $code .= "      }\n";
@@ -745,9 +756,8 @@ sub __compiler {
     my $str = shift;
 
     for ($str) {
-        s!^!_regular_expressions()!e;
 
-        s!use Text::RewriteRules;!!;
+        s!use Text::RewriteRules;!_regular_expressions()!e;
 
         s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 

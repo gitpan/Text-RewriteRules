@@ -1,22 +1,36 @@
-my $__XMLattrs = qr/(?:\s+[a-zA-Z0-9:-]+\s*=\s*(?: '[^']+' | "[^"]+" ))*/x;
-my $__XMLempty = qr/<[a-zA-Z0-9:-]+$__XMLattrs\/>/x;
-my $__XMLtree  = qr/$__XMLempty |
+# -*- cperl -*-
+use Test::More tests => 54;
+
+our $__XMLattrs = qr/(?:
+                      \s+[a-zA-Z0-9:-]+\s*
+                      =
+                      \s*(?: '[^']+' | "[^"]+" ))*/x;
+
+### This (?<PCDATA>\n) is a BIG hack!
+our $__XMLempty = qr/<(?<TAGNAME>[a-zA-Z0-9:-]+)(?<PCDATA>\b)$__XMLattrs\/>/x;
+
+our $__XMLtree2  = qr/$__XMLempty |
                   (?<XML>
                       <(?<TAG>[a-zA-Z0-9:-]+)$__XMLattrs>
                         (?:  $__XMLempty  |  [^<]++  |  (?&XML) )*+
                       <\/\k<TAG>>
                   )/x;
-my $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree )*+/x;
+our $__XMLtree  = qr/$__XMLempty |
+                  (?<XML>
+                      <(?<TAGNAME>[a-zA-Z0-9:-]+)$__XMLattrs>
+                        (?<PCDATA>(?:  $__XMLempty  |  [^<]++  |  $__XMLtree2 )*+)
+                      <\/\k<TAGNAME>>
+                  )/x;
+our $__XMLinner = qr/(?:  [^<]++ | $__XMLempty | $__XMLtree2 )*+/x;
 
-my $__CBB = qr{(\{(?:[^\{\}]++|(?-1))*+\})}sx; ## curly brackets block { ... }  FIXME!!!
-my $__BB  = qr{(\[(?:[^\[\]]++|(?-1))*+\])}sx; ##       brackets block [ ... ]  FIXME!!!
-my $__PB  = qr{(\((?:[^\(\)]++|(?-1))*+\))}sx; ##     parentesis block ( ... )  FIXME!!!
-my $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-my $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
+our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
+our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
+
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
 
 
-# -*- cperl -*-
-use Test::More tests => 54;
 
 
 ## Replace

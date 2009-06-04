@@ -1,4 +1,6 @@
 # -*- cperl -*-
+use warnings;
+use strict;
 use Test::More tests => 9;
 use Text::RewriteRules;
 

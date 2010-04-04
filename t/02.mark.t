@@ -44,13 +44,11 @@ ENDRULES
 is(isecond("Bar"),"BBa");
 
 
-
 MRULES third
 a==>b!!1
 ENDRULES
 
 is(third("bab"),"bbb");
-
 
 ## use of flag instead of MRULES
 RULES/m fourth

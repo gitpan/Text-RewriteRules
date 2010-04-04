@@ -27,8 +27,8 @@ our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
 our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
 our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
 
-our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## \begin{$1}$2\end
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## \begin{$1}[$2]{$3}$4\end
 
 
 
@@ -43,11 +43,13 @@ sub lexer {
   return undef if not defined $lexer_input;
   for ($lexer_input) {
       if (m{^foo}g) {
-        s{foo\G}{};
+        s{foo}{};
+        pos = undef;
         return "zbr"
       }
       if (m{^bar}g) {
-        s{bar\G}{};
+        s{bar}{};
+        pos = undef;
         return "ugh"
       }
   }
@@ -74,11 +76,13 @@ sub lex {
   return undef if not defined $lex_input;
   for ($lex_input) {
       if (m{^(\d+)}g) {
-        s{(\d+)\G}{};
+        s{(\d+)}{};
+        pos = undef;
         return ["INT",$1];
       }
       if (m{^([A-Z]+)}g) {
-        s{([A-Z]+)\G}{};
+        s{([A-Z]+)}{};
+        pos = undef;
         return ["STR",$1];
       }
   }
@@ -104,15 +108,18 @@ sub yylex {
   return undef if not defined $yylex_input;
   for ($yylex_input) {
       if (m{^IF}g) {
-        s{IF\G}{};
+        s{IF}{};
+        pos = undef;
         return ["IF","IF"];
       }
       if (m{^(\w+)}g) {
-        s{(\w+)\G}{};
+        s{(\w+)}{};
+        pos = undef;
         return ["ID",$1];
       }
       if (m{^\s+}gi) {
-        s{\s+\G}{}i;
+        s{\s+}{}i;
+        pos = undef;
         return yylex();
       }
   }
@@ -138,15 +145,18 @@ sub foo {
   return undef if not defined $foo_input;
   for ($foo_input) {
       if (m{^IF}gx) {
-        s{IF\G}{}x;
+        s{IF}{}x;
+        pos = undef;
         return ("IF","IF");
       }
       if (m{^(\w+)}gx) {
-        s{(\w+)\G}{}x;
+        s{(\w+)}{}x;
+        pos = undef;
         return ("ID",$1);
       }
       if (m{^\s+}gix) {
-        s{\s+\G}{}ix;
+        s{\s+}{}ix;
+        pos = undef;
         return foo();
       }
       if (m{^$}) {

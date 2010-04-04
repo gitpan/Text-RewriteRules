@@ -27,8 +27,8 @@ our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
 our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
 our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
 
-our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## \begin{$1}$2\end
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## \begin{$1}[$2]{$3}$4\end
 
 
 
@@ -140,7 +140,8 @@ sub third {
       $modified = 0;
       while (m{b(a+)b}g) {
         if ( length($1)>5) {
-          s{b(a+)b\G}{bbb};
+          s{b(a+)b}{bbb};
+          pos = undef;
           $modified = 1;
           next MAIN
         }
@@ -170,7 +171,8 @@ sub ithird {
       $modified = 0;
       while (m{b(a+)b}gi) {
         if ( length($1)>5) {
-          s{b(a+)b\G}{bbb}i;
+          s{b(a+)b}{bbb}i;
+          pos = undef;
           $modified = 1;
           next MAIN
         }
@@ -203,7 +205,8 @@ sub fourth {
       $modified = 0;
       while (m{b(\d+)}g) {
         if ( $1 > 5) {
-          s{b(\d+)\G}{'b' x $1 }e;
+          s{b(\d+)}{'b' x $1 }e;
+          pos = undef;
           $modified = 1;
           next MAIN
         }
@@ -231,7 +234,8 @@ sub ifourth {
       $modified = 0;
       while (m{b(\d+)}gi) {
         if ( $1 > 5) {
-          s{b(\d+)\G}{'b' x $1 }ei;
+          s{b(\d+)}{'b' x $1 }ei;
+          pos = undef;
           $modified = 1;
           next MAIN
         }

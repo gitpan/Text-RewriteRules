@@ -29,8 +29,8 @@ our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
 our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
 our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
 
-our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## \begin{$1}$2\end
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## \begin{$1}[$2]{$3}$4\end
 
 
 
@@ -178,7 +178,6 @@ sub isecond {
 is(isecond("Bar"),"BBa");
 
 
-
 sub third {
   my $p = shift;
   my $_M = "\x01";
@@ -190,7 +189,8 @@ sub third {
       $modified = 0;
       while (m{${_M}(?:a)}g) {
         if (1) {
-          s{${_M}(?:a)\G}{b${_M}};
+          s{${_M}(?:a)}{b${_M}};
+          pos = undef;
           $modified = 1;
           next MAIN
         }
@@ -208,7 +208,6 @@ sub third {
 
 
 is(third("bab"),"bbb");
-
 
 ## use of flag instead of MRULES
 sub fourth {

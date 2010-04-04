@@ -1,5 +1,12 @@
 Revision history for Text-RewriteRules
 
+0.22    2010, Apr 4 (20:02)
+        - It seems that some code was using an undefined behavior of
+          \G and regular expressions. That code was workarounded not
+          to use it. While it worked perfectly under perl 5.8 and perl
+          5.10 something changed on perl 5.12 regular expression
+          engine that created this behavior.
+
 0.21    2009, Jun 4 (17:08)
         - Mark algorithm skiping new lines.
         - Better compilation of power regexps.

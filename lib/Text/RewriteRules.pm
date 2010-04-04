@@ -14,7 +14,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =head1 SYNOPSIS
 
@@ -314,8 +314,8 @@ our $__CBB = qr{ (?<cbb1> \{ (?<CBB>(?:[^\{\}]++|(?&cbb1))*+) \} ) }sx;
 our $__BB  = qr{ (?<bb1>  \[ (?<BB> (?:[^\[\]]++|(?&bb1) )*+) \] ) }sx;
 our $__PB  = qr{ (?<pb1>  \( (?<PB> (?:[^\(\)]++|(?&pb1) )*+) \) ) }sx;
 
-our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## FIXME
-our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## FIXME
+our $__TEXENV  = qr{\\begin\{(\w+)\}(.*?)\\end\{\1\}}s;                 ## \begin{$1}$2\end
+our $__TEXENV1 = qr{\\begin\{(\w+)\}($__BB?)($__CBB)(.*?)\\end\{\1\}}s; ## \begin{$1}[$2]{$3}$4\end
 
 
 EORE
@@ -340,130 +340,131 @@ sub _mrules {
     my ($conf, $name, $rules) = @_;
     ++$count;
 
-  my $code = "sub $name {\n";
-  $code .= "  my \$p = shift;\n";
-  $code .= "  my \$_M = \"\\x01\";\n";
-  $code .= "  for (\$p) {\n";
-  $code .= "    my \$modified = 1;\n";
-  $code .= "    \$_ = \$_M.\$_;\n";
-  $code .= "    #__$count#\n";
-  $code .= "    MAIN: while (\$modified) {\n";
+    my $code = "sub $name {\n";
+    $code .= "  my \$p = shift;\n";
+    $code .= "  my \$_M = \"\\x01\";\n";
+    $code .= "  for (\$p) {\n";
+    $code .= "    my \$modified = 1;\n";
+    $code .= "    \$_ = \$_M.\$_;\n";
+    $code .= "    #__$count#\n";
+    $code .= "    MAIN: while (\$modified) {\n";
 
-  if ($DEBUG) {
-    $code .= "      print STDERR \" >\$_\\n\";\n"
-  }
-
-  $code .= "      \$modified = 0;\n";
-
-  my $ICASE = exists($conf->{i})?"i":"";
-  my $DX = exists($conf->{x})?"x":"";
-
-  my @rules;
-  if ($DX eq "x") {
-    @rules = split /$NL$NL/, $rules;
-  } else {
-    @rules = split /$NL/, $rules;
-  }
-
-  for my $rule (@rules) {
-		$rule =~ s/$NL$//;
-	
-    if ($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
-      my ($ant,$con,$cond) = ($1,$3,$4);
-      $ICASE = "i" if $2 =~ m!i!;
-      $ant = _expand_pseudo_classes($ant);
-
-      $code .= "      while (m{\${_M}(?:$ant)}g$ICASE) {\n";
-      $code .= "        if ($cond) {\n";
-      $code .= "          s{\${_M}(?:$ant)\\G}{$con\${_M}}$ICASE;\n";
-      $code .= "          \$modified = 1;\n";
-      $code .= "          next MAIN\n";
-      $code .= "        }\n";
-      $code .= "      }\n";
-
-    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/) {
-      my ($ant,$con,$cond) = ($1,$3,$4);
-      $ICASE = "i" if $2 =~ m!i!;
-      $ant = _expand_pseudo_classes($ant);
-
-      $code .= "      while (m{\${_M}(?:$ant)}g$ICASE) {\n";
-      $code .= "        if ($cond) {\n";
-      $code .= "          s{\${_M}(?:$ant)\\G}{eval{$con}.\${_M}}e$ICASE;\n";
-      $code .= "          \$modified = 1;\n";
-      $code .= "          next MAIN\n";
-      $code .= "        }\n";
-      $code .= "      }\n";
-
-    } elsif ($rule =~ m/(.*?)(=i?=>)(.*)/) {
-      my ($ant,$con) = ($1,$3);
-      $ICASE = "i" if $2 =~ m!i!;
-      $ant = _expand_pseudo_classes($ant);
-
-      $code .= "      if (m{\${_M}(?:$ant)}$ICASE) {\n";
-      $code .= "        s{\${_M}(?:$ant)}{$con\${_M}}$ICASE;\n";
-      $code .= "        \$modified = 1;\n";
-      $code .= "        next\n";
-      $code .= "      }\n";
-
-    } elsif($rule =~ m/=b(?:egin)?=>(.*)/s) {
-
-      my $ac = $1;
-      $code =~ s/(#__$count#\n)/$ac;\n$1/;
-
-    } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/) {
-      my ($ant,$con) = ($1,$3);
-      $ICASE = "i" if $2 =~ m!i!;
-      $ant = _expand_pseudo_classes($ant);
-
-      $code .= "      if (m{\${_M}(?:$ant)}$ICASE) {\n";
-      $code .= "        s{\${_M}(?:$ant)}{eval{$con}.\"\$_M\"}e$ICASE;\n";
-      $code .= "        \$modified = 1;\n";
-      $code .= "        next\n";
-      $code .= "      }\n";
-
-    } elsif($rule =~ m/(.*?)(=(?:i=)?l(?:ast)?=>\s*!!(.*))/s) {
-      my ($ant,$cond) = ($1,$3);
-      $ICASE = "i" if $2 =~ m!i!;
-      $ant = _expand_pseudo_classes($ant);
-
-      $code .= "      if (m{\${_M}(?:$ant)}$ICASE$DX) {\n";
-			$code .= "        if ($cond) {\n";
-			$code .= "          s{\${_M}}{};\n";
-      $code .= "          last\n";
-			$code .= "        }\n";
-      $code .= "      }\n";
-
-    } elsif($rule =~ m/(.*?)(=(?:i=)?l(?:ast)?=>)/s) {
-      my ($ant) = ($1);
-      $ICASE = "i" if $2 =~ m!i!;
-      $ant = _expand_pseudo_classes($ant);
-
-      $code .= "      if (m{\${_M}(?:$ant)}$ICASE$DX) {\n";
-			$code .= "        s{\${_M}}{};\n";
-      $code .= "        last\n";
-      $code .= "      }\n";
-
-
-    } else {
-      warn "Unknown rule: $rule\n" unless $rule =~ m!^\s*(#|$)!;
+    if ($DEBUG) {
+        $code .= "      print STDERR \" >\$_\\n\";\n"
     }
-  }
-  ##---
 
-  # Make it walk...
-  $code .= "      if (m{\${_M}(.|\\n)}) {\n";
-  $code .= "        s{\${_M}(.|\\n)}{\$1\${_M}};\n";
-  $code .= "        \$modified = 1;\n";
-  $code .= "        next\n";
-  $code .= "      }\n";
+    $code .= "      \$modified = 0;\n";
 
-  $code .= "    }\n";
-  $code .= "    s/\$_M//;\n";
-  $code .= "  }\n";
-  $code .= "  return \$p;\n";
-  $code .= "}\n";
+    my $ICASE = exists($conf->{i})?"i":"";
+    my $DX    = exists($conf->{x})?"x":"";
 
-  $code;
+    my @rules;
+    if ($DX eq "x") {
+        @rules = split /$NL$NL/, $rules;
+    } else {
+        @rules = split /$NL/, $rules;
+    }
+
+    for my $rule (@rules) {
+        $rule =~ s/$NL$//;
+	
+        if ($rule =~ m/(.*?)(=i?=>)(.*)!!(.*)/) {
+            my ($ant,$con,$cond) = ($1,$3,$4);
+            $ICASE = "i" if $2 =~ m!i!;
+            $ant = _expand_pseudo_classes($ant);
+
+            $code .= "      while (m{\${_M}(?:$ant)}g$ICASE) {\n";
+            $code .= "        if ($cond) {\n";
+            $code .= "          s{\${_M}(?:$ant)}{$con\${_M}}$ICASE;\n";
+            $code .= "          pos = undef;\n";
+            $code .= "          \$modified = 1;\n";
+            $code .= "          next MAIN\n";
+            $code .= "        }\n";
+            $code .= "      }\n";
+
+        } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)!!(.*)/) {
+            my ($ant,$con,$cond) = ($1,$3,$4);
+            $ICASE = "i" if $2 =~ m!i!;
+            $ant = _expand_pseudo_classes($ant);
+
+            $code .= "      while (m{\${_M}(?:$ant)}g$ICASE) {\n";
+            $code .= "        if ($cond) {\n";
+            $code .= "          s{\${_M}(?:$ant)}{eval{$con}.\${_M}}e$ICASE;\n";
+            $code .= "          pos = undef;\n";
+            $code .= "          \$modified = 1;\n";
+            $code .= "          next MAIN\n";
+            $code .= "        }\n";
+            $code .= "      }\n";
+
+        } elsif ($rule =~ m/(.*?)(=i?=>)(.*)/) {
+            my ($ant,$con) = ($1,$3);
+            $ICASE = "i" if $2 =~ m!i!;
+            $ant = _expand_pseudo_classes($ant);
+
+            $code .= "      if (m{\${_M}(?:$ant)}$ICASE) {\n";
+            $code .= "        s{\${_M}(?:$ant)}{$con\${_M}}$ICASE;\n";
+            $code .= "        \$modified = 1;\n";
+            $code .= "        next\n";
+            $code .= "      }\n";
+
+        } elsif($rule =~ m/=b(?:egin)?=>(.*)/s) {
+
+            my $ac = $1;
+            $code =~ s/(#__$count#\n)/$ac;\n$1/;
+
+        } elsif ($rule =~ m/(.*?)(=(?:i=)?e(?:val)?=>)(.*)/) {
+            my ($ant,$con) = ($1,$3);
+            $ICASE = "i" if $2 =~ m!i!;
+            $ant = _expand_pseudo_classes($ant);
+
+            $code .= "      if (m{\${_M}(?:$ant)}$ICASE) {\n";
+            $code .= "        s{\${_M}(?:$ant)}{eval{$con}.\"\$_M\"}e$ICASE;\n";
+            $code .= "        \$modified = 1;\n";
+            $code .= "        next\n";
+            $code .= "      }\n";
+
+        } elsif($rule =~ m/(.*?)(=(?:i=)?l(?:ast)?=>\s*!!(.*))/s) {
+            my ($ant,$cond) = ($1,$3);
+            $ICASE = "i" if $2 =~ m!i!;
+            $ant = _expand_pseudo_classes($ant);
+
+            $code .= "      if (m{\${_M}(?:$ant)}$ICASE$DX) {\n";
+            $code .= "        if ($cond) {\n";
+            $code .= "          s{\${_M}}{};\n";
+            $code .= "          last\n";
+            $code .= "        }\n";
+            $code .= "      }\n";
+
+        } elsif($rule =~ m/(.*?)(=(?:i=)?l(?:ast)?=>)/s) {
+            my ($ant) = ($1);
+            $ICASE = "i" if $2 =~ m!i!;
+            $ant = _expand_pseudo_classes($ant);
+
+            $code .= "      if (m{\${_M}(?:$ant)}$ICASE$DX) {\n";
+            $code .= "        s{\${_M}}{};\n";
+            $code .= "        last\n";
+            $code .= "      }\n";
+
+        } else {
+            warn "Unknown rule: $rule\n" unless $rule =~ m!^\s*(#|$)!;
+        }
+    }
+    ##---
+
+    # Make it walk...
+    $code .= "      if (m{\${_M}(.|\\n)}) {\n";
+    $code .= "        s{\${_M}(.|\\n)}{\$1\${_M}};\n";
+    $code .= "        \$modified = 1;\n";
+    $code .= "        next\n";
+    $code .= "      }\n";
+
+    $code .= "    }\n";
+    $code .= "    s/\$_M//;\n";
+    $code .= "  }\n";
+    $code .= "  return \$p;\n";
+    $code .= "}\n";
+
+    $code;
 }
 
 sub _rules {
@@ -503,7 +504,8 @@ sub _rules {
 
       $code .= "      while (m{$ant}g$ICASE$DX) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{$ant\\G}{$con}$ICASE$DX;\n";
+      $code .= "          s{$ant}{$con}$ICASE$DX;\n";
+      $code .= "          pos = undef;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
@@ -516,7 +518,8 @@ sub _rules {
 
       $code .= "      while (m{$ant}g$ICASE$DX) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{$ant\\G}{$con}e${ICASE}${DX};\n";
+      $code .= "          s{$ant}{$con}e${ICASE}${DX};\n";
+      $code .= "          pos = undef;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
       $code .= "        }\n";
@@ -639,7 +642,8 @@ sub _lrules {
 
           $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
           $code .= "        if ($cond) {\n";
-          $code .= "          s{$ant\\G}{}$ICASE$DX;\n";
+          $code .= "          s{$ant}{}$ICASE$DX;\n";
+          $code .= "          pos = undef;\n";
           $code .= "          return $name();\n";
           $code .= "        }\n";
           $code .= "      }\n";
@@ -650,7 +654,8 @@ sub _lrules {
           $ant = _expand_pseudo_classes($ant);
 
           $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
-          $code .= "        s{$ant\\G}{}$ICASE$DX;\n";
+          $code .= "        s{$ant}{}$ICASE$DX;\n";
+          $code .= "        pos = undef;\n";
           $code .= "        return $name();\n";
           $code .= "      }\n";
 
@@ -661,7 +666,8 @@ sub _lrules {
 
           $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
           $code .= "        if ($cond) {\n";
-          $code .= "          s{$ant\\G}{}$ICASE$DX;\n";
+          $code .= "          s{$ant}{}$ICASE$DX;\n";
+          $code .= "          pos = undef;\n";
           $code .= "          return \"$con\"\n";
           $code .= "        }\n";
           $code .= "      }\n";
@@ -673,7 +679,8 @@ sub _lrules {
 
           $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
           $code .= "        if ($cond) {\n";
-          $code .= "          s{$ant\\G}{}${ICASE}${DX};\n";
+          $code .= "          s{$ant}{}${ICASE}${DX};\n";
+          $code .= "          pos = undef;\n";
           $code .= "          return $con;\n";
           $code .= "        }\n";
           $code .= "      }\n";
@@ -685,7 +692,8 @@ sub _lrules {
           $ant = _expand_pseudo_classes($ant);
 
           $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
-          $code .= "        s{$ant\\G}{}$ICASE$DX;\n";
+          $code .= "        s{$ant}{}$ICASE$DX;\n";
+          $code .= "        pos = undef;\n";
           $code .= "        return \"$con\"\n";
           $code .= "      }\n";
 
@@ -695,7 +703,8 @@ sub _lrules {
           $ant = _expand_pseudo_classes($ant);
 
           $code .= "      if (m{^$ant}g$ICASE$DX) {\n";
-          $code .= "        s{$ant\\G}{}${ICASE}${DX};\n";
+          $code .= "        s{$ant}{}${ICASE}${DX};\n";
+          $code .= "        pos = undef;\n";
           $code .= "        return $con;\n";
           $code .= "      }\n";
 

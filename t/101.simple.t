@@ -39,8 +39,10 @@ sub first {
   for ($p) {
     my $modified = 1;
     #__1#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a}) {
         s{a}{b};
         $modified = 1;
@@ -60,8 +62,10 @@ sub ifirst {
   for ($p) {
     my $modified = 1;
     #__2#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a}i) {
         s{a}{b}i;
         $modified = 1;
@@ -85,8 +89,10 @@ sub second {
   for ($p) {
     my $modified = 1;
     #__3#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a(\d+)}) {
         s{a(\d+)}{$1};
         $modified = 1;
@@ -109,8 +115,10 @@ sub isecond {
   for ($p) {
     my $modified = 1;
     #__4#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a(\d+)}i) {
         s{a(\d+)}{$1}i;
         $modified = 1;
@@ -136,8 +144,10 @@ sub third {
   for ($p) {
     my $modified = 1;
     #__5#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       while (m{b(a+)b}g) {
         if ( length($1)>5) {
           s{b(a+)b}{bbb};
@@ -167,8 +177,10 @@ sub ithird {
   for ($p) {
     my $modified = 1;
     #__6#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       while (m{b(a+)b}gi) {
         if ( length($1)>5) {
           s{b(a+)b}{bbb}i;
@@ -201,8 +213,10 @@ sub fourth {
   for ($p) {
     my $modified = 1;
     #__7#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       while (m{b(\d+)}g) {
         if ( $1 > 5) {
           s{b(\d+)}{'b' x $1 }e;
@@ -230,8 +244,10 @@ sub ifourth {
   for ($p) {
     my $modified = 1;
     #__8#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       while (m{b(\d+)}gi) {
         if ( $1 > 5) {
           s{b(\d+)}{'b' x $1 }ei;
@@ -262,8 +278,10 @@ sub fifth {
   for ($p) {
     my $modified = 1;
     #__9#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{b(\d+)}) {
         s{b(\d+)}{'b' x $1}e;
         $modified = 1;
@@ -287,8 +305,10 @@ sub ififth {
   for ($p) {
     my $modified = 1;
     #__10#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{(b)(\d+)}i) {
         s{(b)(\d+)}{$1 x $2}ei;
         $modified = 1;
@@ -317,8 +337,10 @@ sub sixth {
     my $modified = 1;
      $_="AA${_}AA";
 #__11#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
     }
   }
   return $p;
@@ -337,8 +359,10 @@ sub seventh {
   for ($p) {
     my $modified = 1;
     #__12#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{bbbbbb}) {
         last
       }
@@ -361,8 +385,10 @@ sub iseventh {
   for ($p) {
     my $modified = 1;
     #__13#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{bbbbbb}i) {
         last
       }
@@ -391,8 +417,10 @@ sub eigth {
   for ($p) {
     my $modified = 1;
     #__14#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a}i) {
         s{a}{c}i;
         $modified = 1;
@@ -420,8 +448,10 @@ sub ieigth {
   for ($p) {
     my $modified = 1;
     #__15#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a}i) {
         s{a}{c}i;
         $modified = 1;
@@ -451,8 +481,10 @@ sub iieigth {
   for ($p) {
     my $modified = 1;
     #__16#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a}i) {
         s{a}{c}i;
         $modified = 1;
@@ -482,8 +514,10 @@ sub more {
   for ($p) {
     my $modified = 1;
     #__17#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{(...)}) {
         if ($1 eq "bar") {
           last

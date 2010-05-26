@@ -38,8 +38,10 @@ sub first {
   for ($p) {
     my $modified = 1;
     #__27#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a b c }x) {
         s{a b c }{cba}x;
         $modified = 1;
@@ -60,8 +62,10 @@ sub second {
   for ($p) {
     my $modified = 1;
     #__28#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{a
 b
 c

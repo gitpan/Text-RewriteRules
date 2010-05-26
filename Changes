@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.23    2010, May 26 (19:51)
+        - Added /d debug mode for RULES and RULES/m;
+
 0.22    2010, Apr 4 (20:02)
         - It seems that some code was using an undefined behavior of
           \G and regular expressions. That code was workarounded not

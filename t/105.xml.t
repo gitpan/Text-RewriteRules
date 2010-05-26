@@ -38,8 +38,10 @@ sub first {
   for ($p) {
     my $modified = 1;
     #__33#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__XMLtree}) {
         s{$__XMLtree}{XML};
         $modified = 1;
@@ -56,8 +58,10 @@ sub Xsecond {
   for ($p) {
     my $modified = 1;
     #__34#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{<d$__XMLattrs(?:/>|>$__XMLinner</d>)}) {
         s{<d$__XMLattrs(?:/>|>$__XMLinner</d>)}{XML};
         $modified = 1;
@@ -74,8 +78,10 @@ sub Ysecond {
   for ($p) {
     my $modified = 1;
     #__35#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{<c$__XMLattrs(?:/>|>$__XMLinner</c>)}) {
         s{<c$__XMLattrs(?:/>|>$__XMLinner</c>)}{XML};
         $modified = 1;
@@ -92,8 +98,10 @@ sub Zsecond {
   for ($p) {
     my $modified = 1;
     #__36#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{<b$__XMLattrs(?:/>|>$__XMLinner</b>)}) {
         s{<b$__XMLattrs(?:/>|>$__XMLinner</b>)}{XML};
         $modified = 1;
@@ -110,8 +118,10 @@ sub third {
   for ($p) {
     my $modified = 1;
     #__37#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__XMLtree}) {
         s{$__XMLtree}{$+{TAGNAME}}e;
         $modified = 1;
@@ -128,8 +138,10 @@ sub Xthird {
   for ($p) {
     my $modified = 1;
     #__38#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__XMLtree}) {
         s{$__XMLtree}{$+{PCDATA}}e;
         $modified = 1;

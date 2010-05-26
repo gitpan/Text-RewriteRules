@@ -43,7 +43,9 @@ sub first {
     my $modified = 1;
     $_ = $_M.$_;
     #__18#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:b)}) {
         s{${_M}(?:b)}{bb${_M}};
@@ -79,7 +81,9 @@ sub ifirst {
     my $modified = 1;
     $_ = $_M.$_;
     #__25#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:b)}i) {
         s{${_M}(?:b)}{bb${_M}}i;
@@ -115,7 +119,9 @@ sub second {
     my $modified = 1;
     $_ = $_M.$_;
     #__19#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:b)}) {
         s{${_M}(?:b)}{eval{'b' x 2}."$_M"}e;
@@ -151,7 +157,9 @@ sub isecond {
     my $modified = 1;
     $_ = $_M.$_;
     #__20#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:(b))}i) {
         s{${_M}(?:(b))}{eval{$1 x 2}."$_M"}ei;
@@ -185,7 +193,9 @@ sub third {
     my $modified = 1;
     $_ = $_M.$_;
     #__21#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       while (m{${_M}(?:a)}g) {
         if (1) {
@@ -217,7 +227,9 @@ sub fourth {
     my $modified = 1;
     $_ = $_M.$_;
     #__26#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:b)}) {
         s{${_M}(?:b)}{bb${_M}};
@@ -251,7 +263,9 @@ sub fifth {
     my $modified = 1;
     $_ = $_M.$_;
     #__22#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:b)}) {
         s{${_M}(?:b)}{eval{$a = log(2); $a = sin($a);'b' x 2}."$_M"}e;
@@ -285,7 +299,9 @@ sub sixth {
     my $modified = 1;
     $_ = $_M.$_;
     #__23#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:bar)}) {
         s{${_M}(?:bar)}{ugh${_M}};
@@ -318,7 +334,9 @@ sub seventh {
     my $modified = 1;
     $_ = $_M.$_;
     #__24#
+    my $iteration = 0;
     MAIN: while ($modified) {
+      $iteration++;
       $modified = 0;
       if (m{${_M}(?:bar)}) {
         s{${_M}(?:bar)}{ugh${_M}};

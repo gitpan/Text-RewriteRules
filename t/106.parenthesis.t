@@ -38,8 +38,10 @@ sub first {
   for ($p) {
     my $modified = 1;
     #__39#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__PB}) {
         s{$__PB}{+};
         $modified = 1;
@@ -56,8 +58,10 @@ sub second {
   for ($p) {
     my $modified = 1;
     #__40#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__BB}) {
         s{$__BB}{*};
         $modified = 1;
@@ -74,8 +78,10 @@ sub third {
   for ($p) {
     my $modified = 1;
     #__41#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__CBB}) {
         s{$__CBB}{#};
         $modified = 1;
@@ -92,8 +98,10 @@ sub fourth {
   for ($p) {
     my $modified = 1;
     #__42#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__CBB}) {
         s{$__CBB}{[$+{CBB}]};
         $modified = 1;
@@ -110,8 +118,10 @@ sub fifth {
   for ($p) {
     my $modified = 1;
     #__43#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__BB}) {
         s{$__BB}{{$+{BB}}};
         $modified = 1;
@@ -128,8 +138,10 @@ sub sixth {
   for ($p) {
     my $modified = 1;
     #__44#
+    my $iteration = 0;
     MAIN: while($modified) {
       $modified = 0;
+      $iteration++;
       if (m{$__PB}) {
         s{$__PB}{{$+{PB}}};
         $modified = 1;

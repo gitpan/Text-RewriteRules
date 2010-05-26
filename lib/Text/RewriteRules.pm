@@ -14,7 +14,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 =head1 SYNOPSIS
 
@@ -347,7 +347,9 @@ sub _mrules {
     $code .= "    my \$modified = 1;\n";
     $code .= "    \$_ = \$_M.\$_;\n";
     $code .= "    #__$count#\n";
+    $code .= "    my \$iteration = 0;\n";
     $code .= "    MAIN: while (\$modified) {\n";
+    $code .= "      \$iteration++;\n";
 
     if ($DEBUG) {
         $code .= "      print STDERR \" >\$_\\n\";\n"
@@ -357,6 +359,9 @@ sub _mrules {
 
     my $ICASE = exists($conf->{i})?"i":"";
     my $DX    = exists($conf->{x})?"x":"";
+    if (exists($conf->{d})) {
+        $code .= "      print STDERR \"Iteration on $name: \$iteration\n\$p\n\";";
+    }
 
     my @rules;
     if ($DX eq "x") {
@@ -468,22 +473,27 @@ sub _mrules {
 }
 
 sub _rules {
-  my ($conf,$name, $rules) = @_;
+  my ($conf, $name, $rules) = @_;
   ++$count;
-  
+
   my $code = "sub $name {\n";
   $code .= "  my \$p = shift;\n";
   $code .= "  for (\$p) {\n";
   $code .= "    my \$modified = 1;\n";
   $code .= "    #__$count#\n";
+  $code .= "    my \$iteration = 0;\n";
   $code .= "    MAIN: while(\$modified) {\n";
   $code .= "      print STDERR \$_;\n" if $DEBUG > 1;
   $code .= "      \$modified = 0;\n";
+  $code .= "      \$iteration++;\n";
 
   ##---
 
-  my $DICASE = exists($conf->{i})?"i":"";
-  my $DX = exists($conf->{x})?"x":"";
+  my $DICASE      = exists($conf->{i})?"i":"";
+  my $DX          = exists($conf->{x})?"x":"";
+  if (exists($conf->{d})) {
+      $code .= "      print STDERR \"Iteration on $name: \$iteration\n\$p\n\";";
+  }
 
   my @rules;
   if ($DX eq "x") {

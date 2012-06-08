@@ -8,13 +8,15 @@ use strict;
 
 use 5.010000; # 5.10.0
 
+=encoding UTF-8
+
 =head1 NAME
 
 Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 =head1 SYNOPSIS
 
@@ -54,7 +56,7 @@ traditional rewrite (RULES function):
 
 cursor based rewrite (RULES/m function):
 
- add a cursor to the begining of the string
+ add a cursor to the beginning of the string
  while not reach end of string
  | apply substitute just after cursor and advance cursor
  | or advance cursor if no rule can be applied
@@ -80,7 +82,7 @@ hash with the rules, some other, prefer some syntax sugar.
 
 The approach used is the last: we use C<Filter::Simple> such that we
 can add a specific non-perl syntax inside the Perl script. This
-improves legibility of big rewriting rules sytems.
+improves legibility of big rewriting rules systems.
 
 This documentation is divided in two parts: first we will see the
 reference of the module. Kind of, what it does, with a brief
@@ -150,12 +152,12 @@ rewriting system.
 
 =head2 Conditional Rule
 
-On some cases we want to perform a susbtitution if the pattern matches
+On some cases we want to perform a substitution if the pattern matches
 B<and> a set of conditions about that pattern (or not) are true.
 
 For that, we use a three part rule. We have the common rule plus the
 condition part, separated from the rule by C<!!>. These conditional
-rules can be applied both for basic and exeuction rules.
+rules can be applied both for basic and execution rules.
 
   RULES translate
   ([[:alpha:]]+)=e=>$dic{$1}!! exists($dic{$1})
@@ -225,7 +227,7 @@ you can insert space and line breaks into the regular expression:
 To facilitate matching complex languages Text::RewriteRules defines a
 set of regular expressions that you can use (without defining them).
 
-=head2 Parethesis
+=head2 Parenthesis
 
 There are three kind of usual parenthesis: the standard parenthesis,
 brackets or curly braces. You can match a balanced string of
@@ -238,7 +240,7 @@ For instance, if you apply this rule:
 
 to this string
 
-  something [ a [ b] c [d ]] and somehting more
+  something [ a [ b] c [d ]] and something more
 
 then, you will get
 
@@ -330,7 +332,7 @@ sub _tag_re {
 sub _expand_pseudo_classes {
     my $rules = shift;
 
-    $rules =~ s/\[\[:(\w+):\]\]/\$__$pseudo_classes{$1}/g;
+    $rules =~ s/(\[\[:(\w+):\]\])/$pseudo_classes{$2}?"\$__$pseudo_classes{$2}":$1/ge;
     $rules =~ s/\[\[:(\w+)\(([^,\(\)]+)\):\]\]/$pseudo_classes{"$1+1"}->($2)/ge;
 
     return $rules;
@@ -780,7 +782,7 @@ sub __compiler {
 
         s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_mrules({}, $1,$2)!gem;
 
-        s!^MRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_lrules({}, $1,$2)!gem;
+        s!^LRULES +(\w+)\s*\n((?:.|\n)*?)^ENDRULES!_lrules({}, $1,$2)!gem;
 
         s{^RULES((?:\/\w+)?) +(\w+)\s*\n((?:.|\n)*?)^ENDRULES}{
             my ($a,$b,$c) = ($1,$2,$3);
@@ -803,7 +805,7 @@ sub __compiler {
 
 At the moment, just a set of commented examples.
 
-Example1 -- from number to portuguese words  (usint tradicional rewriting)
+Example1 -- from number to portuguese words  (using traditional rewriting)
 
 Example2 -- Naif translator (using cursor-based rewriting)
 
@@ -859,7 +861,7 @@ C<num2words>).
 
   1==>um 
   2==>dois 
-  3==>trÍs 
+  3==>tr√™s 
   4==>quatro 
   5==>cinco 
   6==>seis 
@@ -872,7 +874,7 @@ C<num2words>).
    ,==>,
   ENDRULES
 
-  num2words(123); # returns "cento e vinte e trÍs"
+  num2words(123); # returns "cento e vinte e tr√™s"
 
 =head2 Naif translator (using cursor-based rewriting)
 
@@ -900,9 +902,9 @@ C<num2words>).
 
 =head1 AUTHOR
 
-Alberto Simıes, C<< <ambs@cpan.org> >>
+Alberto Sim√µes, C<< <ambs@cpan.org> >>
 
-JosÈ Jo„o Almeida, C<< <jjoao@cpan.org> >>
+Jos√© Jo√£o Almeida, C<< <jjoao@cpan.org> >>
 
 =head1 BUGS
 
@@ -921,7 +923,7 @@ Damian Conway for Filter::Simple
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2004-2009 Alberto Simıes and JosÈ Jo„o Almeida, All Rights Reserved.
+Copyright 2004-2009 Alberto Sim√µes and Jos√© Jo√£o Almeida, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

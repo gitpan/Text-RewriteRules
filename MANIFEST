@@ -23,3 +23,4 @@ t/104.lexer.t
 t/105.xml.t
 t/06.parenthesis.t
 t/106.parenthesis.t
+META.json                                Module JSON meta-data (added by MakeMaker)

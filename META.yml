@@ -20,4 +20,4 @@ no_index:
 requires:
   Filter::Simple: 0.78
   Test::More: 0
-version: 0.24
+version: 0.25

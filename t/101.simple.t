@@ -150,7 +150,7 @@ sub third {
       $iteration++;
       while (m{b(a+)b}g) {
         if ( length($1)>5) {
-          s{b(a+)b}{bbb};
+          s{b(a+)b\G}{bbb};
           pos = undef;
           $modified = 1;
           next MAIN
@@ -183,7 +183,7 @@ sub ithird {
       $iteration++;
       while (m{b(a+)b}gi) {
         if ( length($1)>5) {
-          s{b(a+)b}{bbb}i;
+          s{b(a+)b\G}{bbb}i;
           pos = undef;
           $modified = 1;
           next MAIN
@@ -219,7 +219,7 @@ sub fourth {
       $iteration++;
       while (m{b(\d+)}g) {
         if ( $1 > 5) {
-          s{b(\d+)}{'b' x $1 }e;
+          s{b(\d+)\G}{'b' x $1 }e;
           pos = undef;
           $modified = 1;
           next MAIN
@@ -250,7 +250,7 @@ sub ifourth {
       $iteration++;
       while (m{b(\d+)}gi) {
         if ( $1 > 5) {
-          s{b(\d+)}{'b' x $1 }ei;
+          s{b(\d+)\G}{'b' x $1 }ei;
           pos = undef;
           $modified = 1;
           next MAIN

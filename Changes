@@ -1,5 +1,8 @@
 Revision history for Text-RewriteRules
 
+0.25    2012, July 10 (22:17)
+        - Fixed stupid bug for too generic regexps;
+
 0.24    2012, June 8 (18:44)
         - POD fixes
 

@@ -16,7 +16,7 @@ Text::RewriteRules - A system to rewrite text using regexp-based rules
 
 =cut
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 =head1 SYNOPSIS
 
@@ -516,7 +516,7 @@ sub _rules {
 
       $code .= "      while (m{$ant}g$ICASE$DX) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{$ant}{$con}$ICASE$DX;\n";
+      $code .= "          s{$ant\\G}{$con}$ICASE$DX;\n";
       $code .= "          pos = undef;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
@@ -530,7 +530,7 @@ sub _rules {
 
       $code .= "      while (m{$ant}g$ICASE$DX) {\n";
       $code .= "        if ($cond) {\n";
-      $code .= "          s{$ant}{$con}e${ICASE}${DX};\n";
+      $code .= "          s{$ant\\G}{$con}e${ICASE}${DX};\n";
       $code .= "          pos = undef;\n";
       $code .= "          \$modified = 1;\n";
       $code .= "          next MAIN\n";
@@ -923,7 +923,7 @@ Damian Conway for Filter::Simple
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2004-2009 Alberto Simões and José João Almeida, All Rights Reserved.
+Copyright 2004-2012 Alberto Simões and José João Almeida, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
